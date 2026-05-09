@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liene QA Pipeline</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#ebebea;
+  --text:#1a1a18;--text2:#6b6b66;--text3:#9c9a92;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --blue-bg:#E6F1FB;--blue-t:#0C447C;--blue-bd:#185FA5;
+  --green-bg:#EAF3DE;--green-t:#27500A;--green-bd:#3B6D11;
+  --amber-bg:#FAEEDA;--amber-t:#633806;--amber-bd:#854F0B;
+  --purple-bg:#EEEDFE;--purple-t:#3C3489;--purple-bd:#534AB7;
+  --teal-bg:#E1F5EE;--teal-t:#085041;--teal-bd:#0F6E56;
+  --coral-bg:#FAECE7;--coral-t:#712B13;--coral-bd:#993C1D;
+  --r:8px;--rl:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1a18;--bg2:#242422;--bg3:#2e2e2b;
+  --text:#e8e6de;--text2:#9c9a92;--text3:#6b6b66;
+  --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+  --blue-bg:#042C53;--blue-t:#B5D4F4;--blue-bd:#378ADD;
+  --green-bg:#173404;--green-t:#C0DD97;--green-bd:#639922;
+  --amber-bg:#412402;--amber-t:#FAC775;--amber-bd:#BA7517;
+  --purple-bg:#26215C;--purple-t:#CECBF6;--purple-bd:#7F77DD;
+  --teal-bg:#04342C;--teal-t:#9FE1CB;--teal-bd:#1D9E75;
+  --coral-bg:#4A1B0C;--coral-t:#F5C4B3;--coral-bd:#D85A30;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg3);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+.app{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+/* config bar */
+.cfgbar{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:14px 16px;margin-bottom:16px}
+.cfgrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.cfgrow:last-child{margin-bottom:0}
+.cfgrow label{font-size:12px;color:var(--text2);white-space:nowrap;flex-shrink:0}
+select,input[type=text],input[type=password]{font-size:12px;padding:6px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text)}
+select:focus,input:focus{outline:none;border-color:#378ADD}
+.cfg-model{min-width:200px}
+.cfg-key{flex:1;min-width:160px;font-family:monospace}
+.cfg-ghtoken{flex:1;min-width:160px;font-family:monospace}
+.cfg-repo{flex:1;min-width:200px}
+.btnsm{font-size:12px;padding:6px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.btnsm:hover{background:var(--bg3)}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.tag{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--border);color:var(--text3)}
+.tag.hi{border-color:var(--blue-bd);background:var(--blue-bg);color:var(--blue-t);font-weight:500}
+.tag.ok{border-color:var(--green-bd);background:var(--green-bg);color:var(--green-t)}
+.tag.warn{border-color:var(--amber-bd);background:var(--amber-bg);color:var(--amber-t)}
+.hint{font-size:11px;color:var(--text3);margin-top:6px}
+.hint a{color:#378ADD;text-decoration:none}
+/* custom api row */
+#custom-api-row{display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border)}
+/* pipeline */
+.pipeline{display:flex;align-items:flex-start;gap:0;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+.nc{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.nb{width:96px;border-radius:var(--r);border:0.5px solid var(--border2);padding:9px 7px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg2)}
+.nb:hover{opacity:.85}
+.nn{font-size:10px;font-weight:500;margin-bottom:2px;color:var(--text2)}
+.nl{font-size:12px;font-weight:500;color:var(--text)}
+.ns{font-size:10px;color:var(--text3);margin-top:2px}
+.arrc{display:flex;align-items:center;padding-top:30px;flex-shrink:0}
+.arr{width:14px;height:1px;background:var(--border2);position:relative}
+.arr::after{content:"";position:absolute;right:-4px;top:-3px;border:3.5px solid transparent;border-left-color:var(--border2)}
+/* status */
+.status{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;min-height:22px;margin-bottom:10px}
+.spin{width:11px;height:11px;border:1.5px solid var(--border2);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* panels */
+.pa{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.panel{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:14px;display:flex;flex-direction:column;gap:8px}
+.panel.full{grid-column:1/-1}
+.ph{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text2);flex-wrap:wrap}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+textarea{width:100%;resize:vertical;font-size:12px;line-height:1.6;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:8px 10px;color:var(--text);font-family:inherit}
+textarea:focus{outline:none;border-color:#378ADD}
+/* buttons */
+.br{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font-size:12px;padding:7px 14px;border-radius:var(--r);cursor:pointer;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);transition:all .12s}
+button:hover{background:var(--bg3)}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btnp{background:var(--text);color:var(--bg);border:none}
+.btnp:hover{opacity:.85;background:var(--text)}
+/* upload */
+.uparea{border:0.5px dashed var(--border2);border-radius:var(--r);padding:16px;text-align:center;font-size:12px;color:var(--text2);cursor:pointer;background:var(--bg2);transition:border-color .15s}
+.uparea:hover{border-color:#378ADD}
+.uparea.ok{border-color:var(--green-bd);color:var(--green-t)}
+/* chips */
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.chip{font-size:11px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer}
+.chip:hover{color:var(--text)}
+/* scores */
+.scrow{display:flex;gap:5px;flex-wrap:wrap}
+.sc{font-size:11px;padding:2px 8px;border-radius:99px;border:0.5px solid var(--border)}
+.sc.pass{background:var(--green-bg);color:var(--green-t)}
+.sc.warn{background:var(--amber-bg);color:var(--amber-t)}
+.sc.fail{background:#FCEBEB;color:#A32D2D}
+.hbadge{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--amber-bg);color:var(--amber-t);border:0.5px solid var(--amber-bd)}
+.kbadge{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--blue-bg);color:var(--blue-t);border:0.5px solid var(--blue-bd)}
+/* divider */
+.sdiv{font-size:11px;color:var(--text3);margin:4px 0 10px;display:flex;align-items:center;gap:8px}
+.sdiv::before,.sdiv::after{content:"";flex:1;height:0.5px;background:var(--border)}
+/* mind */
+.mwrap{background:var(--bg2);border-radius:var(--r);padding:8px;overflow:auto;max-height:240px}
+/* kb panel */
+.kblist{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto}
+.kbitem{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border-radius:var(--r);font-size:12px}
+.kbitem-name{flex:1;font-weight:500}
+.kbitem-meta{font-size:11px;color:var(--text3)}
+/* views */
+.view{display:none}
+.view.active{display:block}
+.footer{margin-top:40px;font-size:11px;color:var(--text3);text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── 配置栏 ── -->
+<div class="cfgbar">
+  <div class="cfgrow">
+    <label>模型</label>
+    <select class="cfg-model" id="model-select" onchange="onModelChange()">
+      <optgroup label="千问 Qwen（公司）">
+        <option value="company|qwen3.6-plus|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">Qwen3.6 Plus ⭐推荐</option>
+        <option value="company|qwen3.6-max-preview|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">Qwen3.6 Max Preview</option>
+      </optgroup>
+      <optgroup label="DeepSeek（公司）">
+        <option value="company|deepseek-v4-pro|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">DeepSeek V4 Pro</option>
+        <option value="company|deepseek-v4-flash|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">DeepSeek V4 Flash</option>
+        <option value="company|deepseek-v3.2|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">DeepSeek V3.2</option>
+      </optgroup>
+      <optgroup label="智谱 GLM（公司）">
+        <option value="company|glm-5.1|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">GLM-5.1</option>
+      </optgroup>
+      <optgroup label="Kimi（公司）">
+        <option value="company|kimi-k2.6|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">Kimi K2.6</option>
+      </optgroup>
+      <optgroup label="MiniMax（公司）">
+        <option value="company|MiniMax/MiniMax-M2.7|https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">MiniMax-M2.7</option>
+      </optgroup>
+      <optgroup label="其他（需自备Key）">
+        <option value="claude|claude-sonnet-4-20250514|https://api.anthropic.com/v1/messages">Claude Sonnet 4</option>
+        <option value="deepseek|deepseek-v4-pro-off|https://api.deepseek.com/v1/chat/completions">DeepSeek 官方 V4 Pro</option>
+        <option value="deepseek|custom|custom">自定义 API</option>
+      </optgroup>
+    </select>
+    <label>API Key</label>
+    <input type="password" class="cfg-key" id="api-key" placeholder="公司 API Key..." autocomplete="off">
+    <button class="btnsm" onclick="saveKey()">保存</button>
+  </div>
+  <div id="custom-api-row">
+    <div class="cfgrow">
+      <label>API地址</label>
+      <input type="text" id="custom-url" placeholder="https://..." style="flex:2;min-width:260px;font-family:monospace">
+      <label>模型名</label>
+      <input type="text" id="custom-model" placeholder="model name" style="flex:1;min-width:120px">
+      <button class="btnsm" onclick="saveCustomApi()">保存</button>
+    </div>
+  </div>
+  <div class="cfgrow" style="margin-top:8px">
+    <label>GitHub Token</label>
+    <input type="password" class="cfg-ghtoken" id="gh-token" placeholder="ghp_..." autocomplete="off">
+    <label>仓库</label>
+    <input type="text" class="cfg-repo" id="gh-repo" placeholder="ZiHan-QA/Liene-Photo-APP-Case" value="ZiHan-QA/Liene-Photo-APP-Case">
+    <button class="btnsm" onclick="saveGhCfg()">保存</button>
+    <button class="btnsm" onclick="loadKnowledge()" id="btn-load-kb">读取知识库</button>
+  </div>
+  <div class="tags" id="model-tags"></div>
+  <div class="hint" id="api-hint"></div>
+</div>
+
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
+  <h1 style="font-size:18px;font-weight:500">Liene QA Pipeline</h1>
+  <span style="font-size:11px;color:var(--text3)">Liene Photo APP · 智能测试流水线</span>
+</div>
+
+<!-- ── Pipeline 导航 ── -->
+<div class="pipeline">
+  <div class="nc"><div class="nb" id="nb-1" onclick="jumpNode(1)"><div class="nn">节点 1</div><div class="nl">PRD评审</div><div class="ns">上传+评审</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-2" onclick="jumpNode(2)"><div class="nn">节点 2</div><div class="nl">思维导图</div><div class="ns">生成+评审</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-3" onclick="jumpNode(3)"><div class="nn">节点 3</div><div class="nl">导图修正</div><div class="ns">自动修正</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-4" onclick="jumpNode(4)"><div class="nn">节点 4</div><div class="nl">生成用例</div><div class="ns">结构化输出</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-5" onclick="jumpNode(5)"><div class="nn">节点 5</div><div class="nl">用例评审</div><div class="ns">质量检查</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-6" onclick="jumpNode(6)"><div class="nn">节点 6</div><div class="nl">用例修正</div><div class="ns">最终输出</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-kb" onclick="jumpNode(7)" style="border-color:var(--purple-bd)"><div class="nn" style="color:var(--purple-t)">知识库</div><div class="nl" style="color:var(--purple-t)">管理中心</div><div class="ns">查看/编辑/回滚</div></div></div>
+</div>
+
+<div class="status" id="status"></div>
+
+<!-- ── 节点1 ── -->
+<div class="view active" id="view-1">
+  <div class="sdiv">节点1 — PRD 上传与评审</div>
+  <div class="chips">
+    <span class="chip" onclick="useSamplePrd()">载入示例PRD</span>
+    <span class="chip" onclick="clearAll()">重置全部</span>
+    <span class="chip" onclick="showKbPanel()">知识库历史</span>
+  </div>
+  <!-- 知识库历史面板 -->
+  <div id="kb-panel" style="display:none;margin-bottom:12px">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#7F77DD"></div>知识库 — 已评审模块 <span class="kbadge" id="kb-count">加载中...</span></div>
+      <div class="kblist" id="kb-list"></div>
+    </div>
+  </div>
+  <div class="pa">
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#378ADD"></div>PRD 内容
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">支持 .txt / .md / .pdf / .docx</span>
+      </div>
+      <div class="uparea" id="upload-area" onclick="document.getElementById('file-input').click()">
+        点击上传 PRD 文件（.txt / .md / .pdf / .docx）<br>
+        <span style="font-size:11px;margin-top:4px;display:block;color:var(--text3)">或在下方直接粘贴文字</span>
+      </div>
+      <input type="file" id="file-input" accept=".txt,.md,.pdf,.docx,.doc" style="display:none" onchange="handleFile(this)">
+      <textarea id="prd-text" placeholder="在此粘贴 PRD 内容..." style="min-height:110px"></textarea>
+      <div class="br"><button class="btnp" onclick="runNode1()">评审PRD ↗</button></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#639922"></div>评审结果</div>
+      <textarea id="prd-review" placeholder="AI 将分析完整性、歧义点、缺失场景、测试风险..." readonly style="min-height:160px"></textarea>
+      <div class="scrow" id="prd-scores"></div>
+    </div>
+  </div>
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#EF9F27"></div>人工补齐 PRD <span class="hbadge">人工节点</span></div>
+      <textarea id="prd-supplement" placeholder="根据评审意见补充：新增场景、澄清歧义、补充边界条件...&#10;无需补充则直接点击下方按钮" style="min-height:60px"></textarea>
+      <div class="br"><button class="btnp" id="btn-to-node2" disabled onclick="goToNode2()">确认补齐，生成思维导图 ↗</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 节点2 ── -->
+<div class="view" id="view-2">
+  <div class="sdiv">节点2 — 思维导图生成与评审</div>
+  <div class="pa">
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#1D9E75"></div>思维导图（可视化）</div>
+      <div class="mwrap" id="mind-svg-wrap"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">生成中...</div></div>
+      <div class="br" style="margin-top:4px">
+        <button onclick="runMindGen()">重新生成</button>
+        <button onclick="exportXmind()" id="btn-xmind">导出 .xmind ↓</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#639922"></div>导图评审</div>
+      <textarea id="mind-review" placeholder="AI 将评审覆盖度、结构合理性、遗漏测试点..." readonly style="min-height:160px"></textarea>
+      <div class="scrow" id="mind-scores"></div>
+    </div>
+  </div>
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#EF9F27"></div>上传人工修改的 XMind 文件 <span class="hbadge">可选·人工节点</span></div>
+      <div class="uparea" id="xmind-upload-area" onclick="document.getElementById('xmind-input').click()">
+        如需人工调整导图，上传修改后的 .xmind 文件，将替换 AI 生成版本继续流程<br>
+        <span style="font-size:11px;margin-top:4px;display:block;color:var(--text3)">不上传则直接使用 AI 生成版本</span>
+      </div>
+      <input type="file" id="xmind-input" accept=".xmind" style="display:none" onchange="handleXmind(this)">
+      <div class="br">
+        <button class="btnp" id="btn-to-node3" disabled onclick="jumpNode(3)">进入节点3：自动修正导图 ↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 节点3 ── -->
+<div class="view" id="view-3">
+  <div class="sdiv">节点3 — 思维导图自动修正</div>
+  <div class="pa">
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#378ADD"></div>修正前</div>
+      <div class="mwrap" id="mind-before-wrap"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#1D9E75"></div>修正后</div>
+      <div class="mwrap" id="mind-after-wrap"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">点击执行后渲染</div></div>
+    </div>
+  </div>
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#7F77DD"></div>修正说明</div>
+      <textarea id="mind-fix-notes" readonly style="min-height:70px"></textarea>
+      <div class="br">
+        <button class="btnp" onclick="runNode3()">执行自动修正 ↗</button>
+        <button onclick="exportXmind('fixed')" id="btn-xmind-fixed">导出修正版 .xmind ↓</button>
+        <button id="btn-to-node4" disabled onclick="jumpNode(4)">进入节点4：生成测试用例 ↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 节点4 ── -->
+<div class="view" id="view-4">
+  <div class="sdiv">节点4 — 生成结构化测试用例</div>
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#378ADD"></div>测试用例</div>
+      <textarea id="cases-output" placeholder="将根据修正后的思维导图自动生成结构化测试用例..." readonly style="min-height:280px"></textarea>
+      <div class="br">
+        <button class="btnp" onclick="runNode4()">生成测试用例 ↗</button>
+        <button id="btn-to-node5" disabled onclick="jumpNode(5)">进入节点5：评审用例 ↗</button>
+        <button onclick="copyText('cases-output')">复制</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 节点5 ── -->
+<div class="view" id="view-5">
+  <div class="sdiv">节点5 — 测试用例评审</div>
+  <div class="pa">
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#639922"></div>评审意见</div>
+      <textarea id="cases-review" placeholder="AI 将从覆盖完整性、步骤清晰度、边界场景、可执行性等维度评审..." readonly style="min-height:200px"></textarea>
+      <div class="scrow" id="cases-scores"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#D4537E"></div>问题清单</div>
+      <textarea id="cases-issues" placeholder="具体问题与修改建议..." readonly style="min-height:200px"></textarea>
+    </div>
+  </div>
+  <div class="br">
+    <button class="btnp" onclick="runNode5()">执行评审 ↗</button>
+    <button id="btn-to-node6" disabled onclick="jumpNode(6)">进入节点6：自动修正 ↗</button>
+  </div>
+</div>
+
+<!-- ── 节点6 ── -->
+<div class="view" id="view-6">
+  <div class="sdiv">节点6 — 测试用例自动修正（最终输出）</div>
+  <div class="pa">
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#888"></div>修正前</div>
+      <textarea id="cases-before" readonly style="min-height:220px"></textarea>
+    </div>
+    <div class="panel">
+      <div class="ph"><div class="dot" style="background:#1D9E75"></div>修正后（最终版）</div>
+      <textarea id="cases-after" placeholder="修正后的完整测试用例..." readonly style="min-height:220px"></textarea>
+    </div>
+  </div>
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#7F77DD"></div>修正说明</div>
+      <textarea id="cases-fix-notes" readonly style="min-height:60px"></textarea>
+      <div class="ph" style="margin-top:4px;gap:8px;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text2);flex-shrink:0">端</label>
+        <select id="module-platform" style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text)">
+          <option value="app">APP</option>
+          <option value="pad">PAD</option>
+          <option value="pc">PC</option>
+          <option value="admin">后台管理</option>
+        </select>
+        <label style="font-size:12px;color:var(--text2);flex-shrink:0">模块名称</label>
+        <input type="text" id="module-name" placeholder="例如：首页-Kiwi / 机器切换 / 渐变色取色器" style="flex:1;min-width:180px">
+      </div>
+      <div class="br">
+        <button class="btnp" onclick="runNode6()">执行修正 ↗</button>
+        <button onclick="copyText('cases-after')">复制最终用例</button>
+        <button onclick="exportTxt()">导出 .txt</button>
+        <button onclick="saveToGithub()" id="btn-save-kb" style="background:var(--green-bg);color:var(--green-t);border-color:var(--green-bd)">保存到知识库 ↑</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 知识库管理 ── -->
+<div class="view" id="view-7">
+  <div class="sdiv">知识库管理中心</div>
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph">
+        <div class="dot" style="background:#7F77DD"></div>
+        已评审模块
+        <span class="kbadge" id="kb-mgr-count">—</span>
+        <button onclick="loadKnowledge()" style="font-size:11px;padding:3px 10px;margin-left:auto">刷新</button>
+      </div>
+      <div id="kb-mgr-list" style="display:flex;flex-direction:column;gap:6px;margin-top:4px"></div>
+    </div>
+  </div>
+  <!-- 模块详情面板 -->
+  <div id="kb-detail" style="display:none">
+    <div class="sdiv" id="kb-detail-title">模块详情</div>
+    <div class="pa">
+      <div class="panel">
+        <div class="ph"><div class="dot" style="background:#378ADD"></div>最新用例</div>
+        <textarea id="kb-detail-cases" style="min-height:200px;font-size:11px"></textarea>
+        <div class="br">
+          <button class="btnp" onclick="saveDetailEdit()">保存修改 ↑</button>
+          <button onclick="copyText('kb-detail-cases')">复制</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="dot" style="background:#EF9F27"></div>历史版本</div>
+        <div id="kb-history-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
+        <div class="ph" style="margin-top:8px"><div class="dot" style="background:#D4537E"></div>备注</div>
+        <textarea id="kb-detail-note" placeholder="为本次迭代添加备注..." style="min-height:60px"></textarea>
+      </div>
+    </div>
+    <div class="pa">
+      <div class="panel full">
+        <div class="ph"><div class="dot" style="background:#639922"></div>历史评审问题</div>
+        <textarea id="kb-detail-issues" readonly style="min-height:80px;font-size:11px"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Liene QA Pipeline · Key 存本地，数据不离机</div>
+</div>
+
+<!-- ── 依赖库 ── -->
+<!-- mammoth replaced with native docx parser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+const PLATFORM_LABELS={app:"APP",pad:"PAD",pc:"PC",admin:"后台管理"};
+const PLATFORM_COLORS={
+  app:{bg:"var(--blue-bg)",t:"var(--blue-t)",bd:"var(--blue-bd)"},
+  pad:{bg:"var(--teal-bg)",t:"var(--teal-t)",bd:"var(--teal-bd)"},
+  pc:{bg:"var(--purple-bg)",t:"var(--purple-t)",bd:"var(--purple-bd)"},
+  admin:{bg:"var(--amber-bg)",t:"var(--amber-t)",bd:"var(--amber-bd)"}
+};
+const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[]};
+let busy=false;
+const nodeColors=[
+  {bg:"var(--blue-bg)",bd:"var(--blue-bd)",nt:"var(--blue-t)"},
+  {bg:"var(--teal-bg)",bd:"var(--teal-bd)",nt:"var(--teal-t)"},
+  {bg:"var(--purple-bg)",bd:"var(--purple-bd)",nt:"var(--purple-t)"},
+  {bg:"var(--amber-bg)",bd:"var(--amber-bd)",nt:"var(--amber-t)"},
+  {bg:"var(--green-bg)",bd:"var(--green-bd)",nt:"var(--green-t)"},
+  {bg:"var(--coral-bg)",bd:"var(--coral-bd)",nt:"var(--coral-t)"}
+];
+const MODELS={
+  "qwen3.6-plus":{provider:"deepseek",label:"Qwen3.6 Plus",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "qwen3.6-max-preview":{provider:"deepseek",label:"Qwen3.6 Max Preview",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "deepseek-v4-pro":{provider:"deepseek",label:"DeepSeek V4 Pro",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "deepseek-v4-flash":{provider:"deepseek",label:"DeepSeek V4 Flash",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "deepseek-v3.2":{provider:"deepseek",label:"DeepSeek V3.2",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "glm-5.1":{provider:"deepseek",label:"GLM-5.1",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "kimi-k2.6":{provider:"deepseek",label:"Kimi K2.6",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "MiniMax/MiniMax-M2.7":{provider:"deepseek",label:"MiniMax-M2.7",price:"公司Key",url:"https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",storeKey:"qa_key_company",hint:"填入公司提供的 API Key"},
+  "claude-sonnet-4-20250514":{provider:"claude",label:"Claude Sonnet 4",price:"~$0.02/次",url:"https://api.anthropic.com/v1/messages",storeKey:"qa_key_claude",hint:"Key获取：<a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\">console.anthropic.com</a>"},
+  "deepseek-v4-pro-off":{provider:"deepseek",label:"DeepSeek V4 Pro官方",price:"~$0.05/次",url:"https://api.deepseek.com/v1/chat/completions",storeKey:"qa_key_deepseek",hint:"Key获取：<a href=\"https://platform.deepseek.com/api-keys\" target=\"_blank\">platform.deepseek.com</a>"}
+};
+
+function getModelId(){return document.getElementById("model-select").value.split("|")[1];}
+function getModelCfg(){return MODELS[getModelId()]||MODELS["qwen3.6-plus"];}
+
+function onModelChange(){
+  const val=document.getElementById("model-select").value;
+  const isCustom=val==="deepseek|custom|custom";
+  document.getElementById("custom-api-row").style.display=isCustom?"block":"none";
+  if(isCustom){
+    document.getElementById("custom-url").value=localStorage.getItem("qa_custom_url")||"";
+    document.getElementById("custom-model").value=localStorage.getItem("qa_custom_model")||"";
+  }
+  const cfg=getModelCfg();
+  document.getElementById("api-key").value=localStorage.getItem(cfg.storeKey)||"";
+  document.getElementById("model-tags").innerHTML=isCustom
+    ?`<span class="tag hi">自定义 API</span><span class="tag">OpenAI 兼容格式</span>`
+    :`<span class="tag hi">${cfg.label}</span><span class="tag">${cfg.price}</span><span class="tag">${cfg.provider==="claude"?"Anthropic API":"OpenAI 兼容 API"}</span>`;
+  document.getElementById("api-hint").innerHTML=isCustom?"":cfg.hint;
+}
+function saveKey(){
+  const k=document.getElementById("api-key").value.trim();
+  const cfg=getModelCfg();
+  if(k){localStorage.setItem(cfg.storeKey,k);setStatus(cfg.label+" Key 已保存");}
+}
+function saveCustomApi(){
+  const u=document.getElementById("custom-url").value.trim();
+  const m=document.getElementById("custom-model").value.trim();
+  if(u)localStorage.setItem("qa_custom_url",u);
+  if(m)localStorage.setItem("qa_custom_model",m);
+  setStatus("自定义 API 已保存");
+}
+function saveGhCfg(){
+  const t=document.getElementById("gh-token").value.trim();
+  const r=document.getElementById("gh-repo").value.trim();
+  if(t)localStorage.setItem("qa_gh_token",t);
+  if(r)localStorage.setItem("qa_gh_repo",r);
+  setStatus("GitHub 配置已保存");
+}
+function getKey(){
+  const v=document.getElementById("api-key").value.trim();
+  return v||localStorage.getItem(getModelCfg().storeKey)||"";
+}
+function getGhToken(){return document.getElementById("gh-token").value.trim()||localStorage.getItem("qa_gh_token")||"";}
+function getGhRepo(){return document.getElementById("gh-repo").value.trim()||localStorage.getItem("qa_gh_repo")||"ZiHan-QA/Liene-Photo-APP-Case";}
+
+window.addEventListener("load",()=>{
+  onModelChange();
+  const t=localStorage.getItem("qa_gh_token");
+  const r=localStorage.getItem("qa_gh_repo");
+  if(t)document.getElementById("gh-token").value=t;
+  if(r)document.getElementById("gh-repo").value=r;
+  jumpNode(1);
+  loadKnowledge();
+});
+
+/* ── GitHub API ── */
+async function ghGet(path){
+  const token=getGhToken();
+  const repo=getGhRepo();
+  const r=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{
+    headers:token?{Authorization:"Bearer "+token}:{}
+  });
+  if(!r.ok) return null;
+  const d=await r.json();
+  return {content:atob(d.content.replace(/\n/g,"")),sha:d.sha};
+}
+async function ghPut(path,content,message,sha){
+  const token=getGhToken();
+  const repo=getGhRepo();
+  if(!token) throw new Error("请先配置 GitHub Token");
+  const body={message,content:btoa(unescape(encodeURIComponent(content)))};
+  if(sha) body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.message||"GitHub 写入失败");}
+  return r.json();
+}
+
+/* ── 知识库 ── */
+async function loadKnowledge(){
+  setStatus("读取知识库...",true);
+  try{
+    const idx=await ghGet("knowledge/index.json");
+    if(idx){
+      ST.kb=JSON.parse(idx.content);
+      renderKbList();
+      setStatus(`知识库加载完成，共 ${ST.kb.length} 个模块`);
+    } else {
+      ST.kb=[];
+      setStatus("知识库为空，首次使用将自动初始化");
+    }
+  }catch(e){setStatus("知识库读取失败："+e.message);}
+}
+function renderKbList(){
+  const cnt=document.getElementById("kb-count");
+  const list=document.getElementById("kb-list");
+  if(cnt) cnt.textContent=ST.kb.length+" 个模块";
+  if(!list) return;
+  list.innerHTML=ST.kb.length===0
+    ?`<div style="font-size:12px;color:var(--text3);padding:8px">暂无历史记录</div>`
+    :ST.kb.map(m=>`<div class="kbitem">
+      <span class="kbitem-name">${m.name}</span>
+      <span class="kbitem-meta">${m.iteration||""} · ${m.caseCount||0}条用例 · ${m.updatedAt||""}</span>
+      <button onclick="loadModule('${m.name}','${m.platform||'app'}')" style="font-size:11px;padding:3px 8px">加载</button>
+    </div>`).join("");
+  renderKbMgr();
+}
+
+let currentKbModule=null;
+
+function renderKbMgr(){
+  const cnt=document.getElementById("kb-mgr-count");
+  const list=document.getElementById("kb-mgr-list");
+  if(cnt) cnt.textContent=ST.kb.length+" 个模块";
+  if(!list) return;
+  if(ST.kb.length===0){
+    list.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:12px;text-align:center">知识库为空，完成流水线后保存模块</div>`;
+    return;
+  }
+  const platforms=["app","pad","pc","admin"];
+  let html="";
+  platforms.forEach(p=>{
+    const modules=ST.kb.filter(m=>(m.platform||"app")===p);
+    if(modules.length===0) return;
+    const pc=PLATFORM_COLORS[p];
+    html+=`<div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:500;padding:6px 10px;border-radius:var(--r);background:${pc.bg};color:${pc.t};border:0.5px solid ${pc.bd};margin-bottom:6px">
+        ${PLATFORM_LABELS[p]} · ${modules.length} 个模块
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+      ${modules.map(m=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg2);border-radius:var(--r);border:0.5px solid var(--border);margin-left:8px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500">${m.name}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${m.iteration||"—"} · ${m.updatedAt||"—"} · ${m.caseCount||0} 条用例</div>
+          </div>
+          <button onclick="openKbDetail('${m.name}','${m.platform||'app'}')" style="font-size:11px;padding:4px 10px">查看/编辑</button>
+          <button onclick="loadModuleToFlow('${m.name}','${m.platform||'app'}')" style="font-size:11px;padding:4px 10px;background:${pc.bg};color:${pc.t};border-color:${pc.bd}">加载到流程</button>
+          <button onclick="deleteKbModule('${m.name}','${m.platform||'app'}')" style="font-size:11px;padding:4px 10px;background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1">删除</button>
+        </div>`).join("")}
+      </div>
+    </div>`;
+  });
+  list.innerHTML=html;
+}
+
+async function openKbDetail(name,platform='app'){
+  setStatus("读取模块详情："+name+"...",true);
+  try{
+    const f=await ghGet(`knowledge/${platform}/${name}.json`);
+    if(!f){setStatus("读取失败");return;}
+    const data=JSON.parse(f.content);
+    currentKbModule={name,platform,sha:f.sha,data};
+    document.getElementById("kb-detail").style.display="block";
+    document.getElementById("kb-detail-title").textContent=`模块详情 — ${name}`;
+    document.getElementById("kb-detail-cases").value=data.cases||"";
+    document.getElementById("kb-detail-note").value=data.note||"";
+    document.getElementById("kb-detail-issues").value=data.casesReview||"（暂无评审记录）";
+    // 渲染历史版本
+    const history=data.history||[];
+    const hlist=document.getElementById("kb-history-list");
+    if(history.length===0){
+      hlist.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:8px">暂无历史版本</div>`;
+    } else {
+      hlist.innerHTML=[...history].reverse().map((h,i)=>`
+        <div style="padding:8px 10px;background:var(--bg);border-radius:var(--r);border:0.5px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:500">${h.date||"—"}</span>
+            <span style="font-size:11px;color:var(--text3)">${(h.cases||"").split("---").length} 条用例</span>
+            <button onclick="rollbackTo(${history.length-1-i})" style="font-size:11px;padding:2px 8px;margin-left:auto">回滚到此版本</button>
+          </div>
+          ${h.issues?`<div style="font-size:11px;color:var(--text3);margin-top:4px;max-height:40px;overflow:hidden">${h.issues.substring(0,100)}...</div>`:""}
+        </div>`).join("");
+    }
+    setStatus("已加载："+name);
+    document.getElementById("kb-detail").scrollIntoView({behavior:"smooth"});
+  }catch(e){setStatus("读取失败："+e.message);}
+}
+
+async function saveDetailEdit(){
+  if(!currentKbModule){setStatus("请先选择一个模块");return;}
+  const newCases=document.getElementById("kb-detail-cases").value;
+  const note=document.getElementById("kb-detail-note").value;
+  setStatus("保存修改中...",true);
+  try{
+    const data={...currentKbModule.data,cases:newCases,note,updatedAt:new Date().toLocaleDateString("zh-CN"),caseCount:newCases.split("---").length};
+    await ghPut(`knowledge/${currentKbModule.platform}/${currentKbModule.name}.json`,
+      JSON.stringify(data,null,2),"edit: "+currentKbModule.name,currentKbModule.sha);
+    // 更新index
+    const idxFile=await ghGet("knowledge/index.json");
+    let idx=idxFile?JSON.parse(idxFile.content):[];
+    const ei=idx.findIndex(m=>m.name===currentKbModule.name);
+    if(ei>=0){idx[ei].updatedAt=data.updatedAt;idx[ei].caseCount=data.caseCount;}
+    await ghPut("knowledge/index.json",JSON.stringify(idx,null,2),"index: edit "+currentKbModule.name,idxFile?.sha);
+    ST.kb=idx;renderKbMgr();
+    setStatus("修改已保存 ✓");
+  }catch(e){setStatus("保存失败："+e.message);}
+}
+
+async function rollbackTo(historyIdx){
+  if(!currentKbModule||!confirm("确认回滚到该版本？当前版本将存入历史。"))return;
+  setStatus("回滚中...",true);
+  try{
+    const data=currentKbModule.data;
+    const history=data.history||[];
+    const target=history[historyIdx];
+    // 把当前版本推入历史
+    history.push({date:data.updatedAt,cases:data.cases,issues:data.casesReview});
+    const newData={...data,cases:target.cases,updatedAt:new Date().toLocaleDateString("zh-CN"),history:history.slice(-5)};
+    await ghPut(`knowledge/${currentKbModule.platform}/${currentKbModule.name}.json`,
+      JSON.stringify(newData,null,2),"rollback: "+currentKbModule.name,currentKbModule.sha);
+    await openKbDetail(currentKbModule.name);
+    setStatus("已回滚到历史版本 ✓");
+  }catch(e){setStatus("回滚失败："+e.message);}
+}
+
+async function deleteKbModule(name,platform='app'){
+  if(!confirm(`确认删除模块「${name}」？此操作不可撤销。`))return;
+  setStatus("删除中...",true);
+  try{
+    // 删除功能文件
+    const f=await ghGet(`knowledge/${platform}/${name}.json`);
+    if(f){
+      const repo=getGhRepo();const token=getGhToken();
+      await fetch(`https://api.github.com/repos/${repo}/contents/knowledge/${platform}/${encodeURIComponent(name)}.json`,{
+        method:"DELETE",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+        body:JSON.stringify({message:"delete: "+name,sha:f.sha})
+      });
+    }
+    // 更新index
+    const idxFile=await ghGet("knowledge/index.json");
+    if(idxFile){
+      let idx=JSON.parse(idxFile.content).filter(m=>!(m.name===name&&(m.platform||"app")===platform));
+      await ghPut("knowledge/index.json",JSON.stringify(idx,null,2),"index: delete "+name,idxFile.sha);
+      ST.kb=idx;
+    }
+    document.getElementById("kb-detail").style.display="none";
+    currentKbModule=null;
+    renderKbMgr();
+    setStatus(`「${name}」已删除`);
+  }catch(e){setStatus("删除失败："+e.message);}
+}
+
+function loadModuleToFlow(name,platform){
+  loadModule(name,platform);
+  jumpNode(1);
+}
+async function loadModule(name, platform){
+  setStatus("加载模块："+name+"...",true);
+  try{
+    const path=platform?`knowledge/${platform}/${name}.json`:`knowledge/app/${name}.json`;
+    const f=await ghGet(path);
+    if(f){
+      const data=JSON.parse(f.content);
+      if(data.prd) document.getElementById("prd-text").value=data.prd;
+      if(data.cases) document.getElementById("cases-output").value=data.cases;
+      if(data.mindData) ST.mindData=data.mindData;
+      setStatus(`已加载「${PLATFORM_LABELS[platform||"app"]} / ${name}」，可在此基础上继续迭代`);
+      document.getElementById("module-name").value=name;
+      if(platform) document.getElementById("module-platform").value=platform;
+    }
+  }catch(e){setStatus("加载失败："+e.message);}
+}
+function showKbPanel(){
+  const p=document.getElementById("kb-panel");
+  p.style.display=p.style.display==="none"?"block":"none";
+  renderKbList();
+}
+async function saveToGithub(){
+  const moduleName=document.getElementById("module-name").value.trim();
+  const platform=document.getElementById("module-platform").value;
+  if(!moduleName){setStatus("请先填写模块名称");return;}
+  const finalCases=document.getElementById("cases-after").value||document.getElementById("cases-output").value;
+  if(!finalCases){setStatus("暂无用例可保存");return;}
+  setStatus("保存到知识库...",true);
+  try{
+    const now=new Date().toLocaleDateString("zh-CN");
+    const week="W"+String(Math.ceil((new Date().getDate()-new Date().getDay()+6)/7)).padStart(2,"0");
+    const iteration=new Date().getFullYear()+"-"+week;
+    const featurePath=`knowledge/${platform}/${moduleName}.json`;
+    const existing=await ghGet(featurePath);
+    const history=existing?JSON.parse(existing.content).history||[]:[];
+    history.push({date:now,cases:document.getElementById("cases-output").value,issues:document.getElementById("cases-issues").value});
+    const featureData={
+      name:moduleName,platform,updatedAt:now,iteration,
+      prd:ST.prdText,
+      mindData:ST.mindFixed||ST.mindData,
+      mindReview:ST.mindReview,
+      cases:finalCases,
+      casesReview:ST.casesReview,
+      history:history.slice(-5)
+    };
+    await ghPut(featurePath,JSON.stringify(featureData,null,2),`feat: update ${platform}/${moduleName} ${now}`,existing?.sha);
+    // 更新index
+    const idxFile=await ghGet("knowledge/index.json");
+    let idx=idxFile?JSON.parse(idxFile.content):[];
+    const ei=idx.findIndex(m=>m.name===moduleName&&m.platform===platform);
+    const entry={name:moduleName,platform,updatedAt:now,iteration,caseCount:finalCases.split("---").length};
+    if(ei>=0)idx[ei]=entry; else idx.push(entry);
+    await ghPut("knowledge/index.json",JSON.stringify(idx,null,2),`index: update ${platform}/${moduleName}`,idxFile?.sha);
+    ST.kb=idx;
+    renderKbList();
+    setStatus(`「${PLATFORM_LABELS[platform]} / ${moduleName}」已保存到知识库 ✓`);
+  }catch(e){setStatus("保存失败："+e.message);}
+}
+
+/* ── 文件处理 ── */
+async function handleFile(input){
+  const f=input.files[0]; if(!f) return;
+  const name=f.name.toLowerCase();
+  const area=document.getElementById("upload-area");
+  area.classList.add("ok");
+  area.textContent="已上传："+f.name+" (解析中...)";
+  try{
+    let text="";
+    if(name.endsWith(".pdf")){
+      text=await extractPdf(f,area);
+    } else if(name.endsWith(".docx")||name.endsWith(".doc")){
+      text=await extractDocx(f);
+    } else {
+      text=await f.text();
+    }
+    document.getElementById("prd-text").value=text;
+    area.textContent="已解析："+f.name+" ("+text.length+" 字符)";
+  }catch(e){
+    area.classList.remove("ok");
+    area.textContent="解析失败："+e.message+"，请直接粘贴文字";
+  }
+}
+async function extractDocx(file){
+  // 用 JSZip 原生解析 docx（无需 mammoth）
+  // docx 本质是 zip，文字在 word/document.xml 里
+  const ab=await file.arrayBuffer();
+  const zip=await JSZip.loadAsync(ab);
+  const xmlFile=zip.file("word/document.xml");
+  if(!xmlFile) throw new Error("无法解析 docx 文件结构");
+  const xml=await xmlFile.async("string");
+  // 提取所有 <w:t> 标签内的文字
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(xml,"text/xml");
+  const texts=[...doc.querySelectorAll("t")];
+  // 按段落分组（<w:p> 标签）
+  const paras=[...doc.querySelectorAll("p")];
+  return paras.map(p=>[...p.querySelectorAll("t")].map(t=>t.textContent).join("")).filter(s=>s.trim()).join("\n");
+}
+
+// 判断一页文字是否足够（少于20字符视为图片页）
+function isImagePage(text){ return text.trim().length < 20; }
+
+// 把 canvas 转为 base64
+function canvasToBase64(canvas){ return canvas.toDataURL("image/jpeg",0.85).split(",")[1]; }
+
+// 用视觉模型解析图片页
+async function analyzePageImage(base64Img, pageNum){
+  const key=getKey(); if(!key) return `[第${pageNum}页图片内容，无法解析：API Key未配置]`;
+  const visionUrl="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+  const visionModel="kimi-k2.6";
+  try{
+    const r=await fetch(visionUrl,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({
+        model:visionModel,
+        max_tokens:1000,
+        messages:[{
+          role:"user",
+          content:[
+            {type:"image_url",image_url:{url:"data:image/jpeg;base64,"+base64Img}},
+            {type:"text",text:"这是一份产品需求文档（PRD）的第"+pageNum+"页，请提取并描述页面中所有文字内容、流程图逻辑、原型图布局和标注信息，以结构化文字输出，不要遗漏任何细节。"}
+          ]
+        }]
+      })
+    });
+    const d=await r.json();
+    if(d.choices) return `[第${pageNum}页视觉解析]\n`+d.choices[0]?.message?.content;
+    return `[第${pageNum}页图片，解析失败：${d.error?.message||"未知错误"}]`;
+  }catch(e){
+    return `[第${pageNum}页图片，解析失败：${e.message}]`;
+  }
+}
+
+async function extractPdf(file, area){
+  if(!window.pdfjsLib){
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc="";
+  }
+  const ab=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:ab,useWorkerFetch:false,isEvalSupported:false,useSystemFonts:true}).promise;
+  const totalPages=pdf.numPages;
+  let pages=[];
+  // 第一遍：提取所有页面文字
+  for(let i=1;i<=totalPages;i++){
+    const page=await pdf.getPage(i);
+    const tc=await page.getTextContent();
+    const text=tc.items.map(s=>s.str).join(" ");
+    pages.push({pageNum:i,text,page,needVision:isImagePage(text)});
+  }
+  const visionPages=pages.filter(p=>p.needVision);
+  let result="";
+  if(visionPages.length>0){
+    if(area) area.textContent=`已解析文字，${visionPages.length}页含图片，正在用 Kimi 视觉模型解析...`;
+    // 渲染图片页并发给视觉模型
+    const canvas=document.createElement("canvas");
+    for(const p of visionPages){
+      const vp=p.page.getViewport({scale:1.5});
+      canvas.width=vp.width; canvas.height=vp.height;
+      const ctx=canvas.getContext("2d");
+      await p.page.render({canvasContext:ctx,viewport:vp}).promise;
+      const base64=canvasToBase64(canvas);
+      p.text=await analyzePageImage(base64,p.pageNum);
+      if(area) area.textContent=`视觉解析中（${visionPages.indexOf(p)+1}/${visionPages.length}）...`;
+    }
+  }
+  result=pages.map(p=>`=== 第${p.pageNum}页 ===\n${p.text}`).join("\n\n");
+  return result;
+}
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement("script");s.src=src;
+    s.onload=res;s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+/* ── XMind 导出 ── */
+async function exportXmind(type){
+  const data=type==="fixed"?(ST.mindFixed||ST.mindData):ST.mindData;
+  if(!data){setStatus("暂无导图可导出");return;}
+  try{
+    const zip=new JSZip();
+    const rootId="root-"+Date.now();
+    function buildXmlNode(node,id){
+      const cid=id||"n-"+Math.random().toString(36).slice(2,10);
+      let xml=`<topic id="${cid}"><title>${escXml(node.name||node.root||"")}</title>`;
+      const children=node.children||[];
+      if(children.length){
+        xml+=`<children><topics type="attached">`;
+        children.forEach((c,i)=>{ xml+=buildXmlNode(c,"n-"+cid+"-"+i); });
+        xml+=`</topics></children>`;
+      }
+      xml+=`</topic>`;
+      return xml;
+    }
+    function escXml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+    const rootTitle=data.root||"测试导图";
+    let topicsXml="";
+    (data.children||[]).forEach((c,i)=>{ topicsXml+=buildXmlNode(c,"n-root-"+i); });
+    const contentXml=`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" version="2.0">
+<sheet id="sheet-1" timestamp="${Date.now()}">
+<topic id="${rootId}">
+<title>${escXml(rootTitle)}</title>
+<children><topics type="attached">${topicsXml}</topics></children>
+</topic>
+<title>${escXml(rootTitle)}</title>
+</sheet>
+</xmap-content>`;
+    zip.file("content.xml",contentXml);
+    zip.file("meta.xml",`<?xml version="1.0" encoding="UTF-8"?><meta xmlns="urn:xmind:xmap:xmlns:meta:2.0" version="2.0"/>`);
+    zip.file("META-INF/manifest.xml",`<?xml version="1.0" encoding="UTF-8"?><manifest xmlns="urn:xmind:xmap:xmlns:manifest:1.0"><file-entry full-path="content.xml" media-type="text/xml"/></manifest>`);
+    const blob=await zip.generateAsync({type:"blob"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=(data.root||"测试导图")+(type==="fixed"?"_修正版":"")+".xmind";
+    a.click();
+    setStatus("XMind 文件已导出");
+  }catch(e){setStatus("导出失败："+e.message);}
+}
+
+/* ── 上传 XMind ── */
+async function handleXmind(input){
+  const f=input.files[0]; if(!f) return;
+  const area=document.getElementById("xmind-upload-area");
+  area.classList.add("ok");
+  area.textContent="解析中："+f.name;
+  try{
+    const zip=await JSZip.loadAsync(await f.arrayBuffer());
+    const xmlFile=zip.file("content.xml");
+    if(!xmlFile) throw new Error("找不到 content.xml");
+    const xml=await xmlFile.async("string");
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(xml,"text/xml");
+    function parseNode(el){
+      const title=el.querySelector(":scope > title")?.textContent||"";
+      const childEls=[...el.querySelectorAll(":scope > children > topics > topic")];
+      const node={name:title};
+      if(childEls.length) node.children=childEls.map(parseNode);
+      else node.children=[];
+      return node;
+    }
+    const rootEl=doc.querySelector("sheet > topic");
+    if(!rootEl) throw new Error("导图结构无法解析");
+    const rootTitle=rootEl.querySelector(":scope > title")?.textContent||"导图";
+    const childEls=[...rootEl.querySelectorAll(":scope > children > topics > topic")];
+    const json={root:rootTitle,children:childEls.map(parseNode)};
+    ST.mindData=json;
+    document.getElementById("mind-raw")&&(document.getElementById("mind-raw").value=JSON.stringify(json,null,2));
+    renderMindMap("mind-svg-wrap",json);
+    area.textContent="已载入 XMind："+f.name+" ("+childEls.length+" 个一级节点)";
+    setStatus("XMind 已载入，将使用此版本继续流程");
+  }catch(e){
+    area.classList.remove("ok");
+    area.textContent="解析失败："+e.message;
+  }
+}
+
+/* ── AI 调用 ── */
+async function callAI(system,user){
+  const key=getKey(); if(!key) throw new Error("请先填写并保存 API Key");
+  const val=document.getElementById("model-select").value;
+  const isCustom=val==="deepseek|custom|custom";
+  let mid,apiUrl,provider;
+  if(isCustom){
+    apiUrl=localStorage.getItem("qa_custom_url")||"";
+    mid=localStorage.getItem("qa_custom_model")||"";
+    provider="deepseek";
+    if(!apiUrl) throw new Error("请先填写自定义 API 地址");
+    if(!mid) throw new Error("请先填写模型名称");
+  } else {
+    mid=getModelId();const cfg=getModelCfg();apiUrl=cfg.url;provider=cfg.provider;
+  }
+  // 拼入知识库上下文
+  const kbCtx=buildKbContext();
+  const fullSystem=kbCtx?system+"\n\n【历史知识库上下文】\n"+kbCtx:system;
+  if(provider==="claude"){
+    const r=await fetch(apiUrl,{method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},
+      body:JSON.stringify({model:mid,max_tokens:1500,system:fullSystem,messages:[{role:"user",content:user}]})});
+    const d=await r.json();
+    if(!d.content) throw new Error(d.error?.message||"Anthropic API 请求失败");
+    return d.content.map(b=>b.text||"").join("");
+  } else {
+    const r=await fetch(apiUrl,{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({model:mid,max_tokens:1500,
+        messages:[{role:"system",content:fullSystem},{role:"user",content:user}]})});
+    const d=await r.json();
+    if(!d.choices) throw new Error(d.error?.message||"API 请求失败");
+    return d.choices[0]?.message?.content||"";
+  }
+}
+function buildKbContext(){
+  if(!ST.kb||ST.kb.length===0) return "";
+  return "已评审功能模块："+ST.kb.map(m=>m.name+"（"+m.updatedAt+"，"+m.caseCount+"条用例）").join("；");
+}
+
+/* ── UI 工具 ── */
+function setStatus(msg,spin){
+  document.getElementById("status").innerHTML=spin
+    ?`<div class="spin"></div><span>${msg}</span>`:`<span>${msg}</span>`;
+}
+function jumpNode(n){
+  for(let i=1;i<=6;i++){
+    document.getElementById("view-"+i).classList.toggle("active",i===n);
+    const nb=document.getElementById("nb-"+i);
+    const done=(i===1&&ST.prdReview)||(i===2&&ST.mindData)||(i===3&&ST.mindFixed)||(i===4&&ST.cases)||(i===5&&ST.casesReview)||(i===6&&ST.casesFinal);
+    const c=nodeColors[i-1];
+    if(i===n||done){
+      nb.style.background=c.bg;nb.style.borderColor=c.bd;nb.style.borderWidth=i===n?"1.5px":"1px";
+      nb.querySelector(".nn").style.color=c.nt;nb.querySelector(".nl").style.color=c.nt;
+    } else {
+      nb.style.background="var(--bg2)";nb.style.borderColor="var(--border2)";nb.style.borderWidth="0.5px";
+      nb.querySelector(".nn").style.color="var(--text2)";nb.querySelector(".nl").style.color="var(--text)";
+    }
+  }
+  // 知识库节点
+  const nbKb=document.getElementById("nb-kb");
+  if(n===7){
+    document.getElementById("view-7").classList.add("active");
+    nbKb.style.borderWidth="1.5px";
+    renderKbMgr();
+  } else {
+    document.getElementById("view-7").classList.remove("active");
+    nbKb.style.borderWidth="0.5px";
+  }
+}
+function renderScores(id,text){
+  const el=document.getElementById(id);el.innerHTML="";
+  [...text.matchAll(/\[([^\]]+)\]/g)].forEach(m=>{
+    const sp=document.createElement("span");sp.className="sc";
+    const [k,v]=m[1].split(":");
+    const isRisk=k.includes("风险")||k.includes("遗漏");
+    if(v==="高")sp.classList.add(isRisk?"fail":"pass");
+    else if(v==="中")sp.classList.add("warn");
+    else sp.classList.add(isRisk?"pass":"fail");
+    sp.textContent=m[1];el.appendChild(sp);
+  });
+}
+function useSamplePrd(){
+  document.getElementById("prd-text").value=`功能名称：首页无设备状态下的功能入口展示\n\n背景：用户首次打开极印 Photo APP，尚未连接任何打印机设备时，首页需要根据是否有设备决定展示内容。\n\n功能描述：\n1. 无设备状态：首页顶部展示引导Banner，提示用户连接打印机\n2. 点击「一键打印」入口：跳转至设备引导页\n3. 点击「相册打印」入口：提示需要先连接设备\n4. 国内版/海外版首页Tab结构不同：国内版含「发现」Tab，海外版无\n5. 已登录与未登录状态下引导Banner文案不同\n\n待确认：无设备时底部Tab是否需要隐藏部分功能入口`;
+}
+function clearAll(){
+  if(!confirm("确认重置所有数据？"))return;
+  Object.keys(ST).forEach(k=>{if(k!=="kb")ST[k]=typeof ST[k]==="string"?"":null;});
+  ["prd-text","prd-review","prd-supplement","mind-review","mind-fix-notes",
+   "cases-output","cases-review","cases-issues","cases-before","cases-after","cases-fix-notes"]
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  ["prd-scores","mind-scores","cases-scores"].forEach(id=>document.getElementById(id).innerHTML="");
+  ["mind-svg-wrap","mind-before-wrap","mind-after-wrap"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">—</div>`;
+  });
+  ["btn-to-node2","btn-to-node3","btn-to-node4","btn-to-node5","btn-to-node6"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.disabled=true;
+  });
+  jumpNode(1);setStatus("已重置");
+}
+function copyText(id){
+  const t=document.getElementById(id)?.value;if(!t)return;
+  navigator.clipboard.writeText(t).then(()=>setStatus("已复制到剪贴板"));
+}
+function exportTxt(){
+  const t=document.getElementById("cases-after").value||document.getElementById("cases-output").value;
+  if(!t){setStatus("暂无用例可导出");return;}
+  const blob=new Blob([t],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="测试用例_"+(new Date().toLocaleDateString("zh-CN").replace(/\//g,"-"))+".txt";
+  a.click();
+}
+
+/* ── 节点逻辑 ── */
+async function runNode1(){
+  const prd=document.getElementById("prd-text").value.trim();
+  if(!prd){setStatus("请先输入或上传PRD内容");return;}
+  if(busy)return;busy=true;
+  setStatus(getModelCfg().label+" 正在评审PRD...",true);
+  try{
+    const res=await callAI(`你是Liene/极印Photo APP的资深QA测试工程师。从测试视角评审PRD，输出评审报告，包含以下五个维度：
+
+1. 测试范围：本次改动涉及哪些功能模块，改动边界在哪里
+2. 验收标准：每个功能点是否有明确可测试的判断依据，列出不明确的点
+3. 逻辑自洽性：流程是否完整、状态跳转有无缺失、功能点之间有无矛盾
+4. 边界条件：极值、空值、异常场景、并发等是否有明确说明，列出缺失的
+5. 测试卡点：哪些描述模糊会导致用例写不下去，需要产品先澄清
+
+最后给出结论（单独一行）：
+- 若可以开始写用例：输出「✅ 可以开始写用例」
+- 若有问题需澄清：输出「⚠️ 需澄清以下问题后再写用例：[问题1] [问题2]...」
+
+评分标签（单独一行）：[验收标准:高/中/低] [逻辑完整性:高/中/低] [边界覆盖:高/中/低]
+中文，简明扼要，重点突出测试关注点`,"PRD内容：\n\n"+prd);
+    ST.prdReview=res;ST.prdText=prd;
+    // 提取结论行和评分行，其余为正文
+    const lines=res.split("\n");
+    const conclusionLine=lines.find(l=>l.includes("✅")||l.includes("⚠️"))||"";
+    const body=res.replace(/\[[^\]]+\][\s\S]*$/m,"").trim();
+    document.getElementById("prd-review").value=body;
+    renderScores("prd-scores",res);
+    document.getElementById("btn-to-node2").disabled=false;
+    const tip=conclusionLine.includes("✅")?"PRD评审完成 ✅ 可以开始写用例":"PRD评审完成 ⚠️ 建议人工补齐后再继续";
+    setStatus(tip);
+  }catch(e){setStatus("出错："+e.message);}
+  busy=false;
+}
+function goToNode2(){ST.prdSupplement=document.getElementById("prd-supplement").value;jumpNode(2);runMindGen();}
+async function runMindGen(){
+  if(busy)return;busy=true;
+  setStatus(getModelCfg().label+" 生成思维导图...",true);
+  try{
+    const combined=ST.prdText+(ST.prdSupplement?"\n\n【补充内容】\n"+ST.prdSupplement:"");
+    const res=await callAI(`你是QA测试架构师。根据PRD生成测试思维导图JSON。
+只输出JSON，不要任何说明文字或markdown代码块。
+格式：{"root":"功能名称","children":[{"name":"一级分类","children":[{"name":"测试点","children":[]}]}]}
+一级节点为测试维度（功能测试/边界测试/异常测试/兼容性测试/性能测试），二级节点为具体测试点。`,combined);
+    let json;
+    try{json=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}
+    catch(e){json={root:"功能测试",children:[{name:"功能测试",children:[{name:"基础流程",children:[]}]},{name:"边界测试",children:[{name:"边界值",children:[]}]},{name:"异常测试",children:[{name:"异常场景",children:[]}]}]};}
+    ST.mindData=json;
+    renderMindMap("mind-svg-wrap",json);
+    await runMindReview(json);
+    document.getElementById("btn-to-node3").disabled=false;
+    setStatus("节点2完成，可下载XMind或上传修改版，然后进入节点3");
+  }catch(e){setStatus("出错："+e.message);}
+  busy=false;
+}
+async function runMindReview(json){
+  const res=await callAI(`你是测试覆盖度评审专家。评审测试思维导图：
+1. 覆盖完整性 2. 结构合理性 3. 遗漏的具体测试点
+最后一行输出：[覆盖度:高/中/低] [结构:高/中/低] [遗漏风险:高/中/低]
+中文简洁`,"思维导图：\n"+JSON.stringify(json,null,2));
+  ST.mindReview=res.replace(/\[[^\]]+\][\s\S]*$/m,"").trim();
+  document.getElementById("mind-review").value=ST.mindReview;
+  renderScores("mind-scores",res);
+}
+async function runNode3(){
+  if(!ST.mindData){setStatus("请先完成节点2");return;}
+  if(busy)return;busy=true;
+  setStatus(getModelCfg().label+" 自动修正思维导图...",true);
+  renderMindMap("mind-before-wrap",ST.mindData);
+  try{
+    const res=await callAI(`你是QA测试架构师。根据评审意见修正并补充测试思维导图。
+只输出修正后的完整JSON，格式与输入一致，不要说明文字。`,
+      `原始导图：\n${JSON.stringify(ST.mindData,null,2)}\n\n评审意见：\n${ST.mindReview}`);
+    let fixed;
+    try{fixed=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}catch(e){fixed=ST.mindData;}
+    ST.mindFixed=fixed;
+    renderMindMap("mind-after-wrap",fixed);
+    const notes=await callAI("简要说明对思维导图做了哪些修正（3-5条，中文，每条一行）",
+      `原始：${JSON.stringify(ST.mindData)}\n修正后：${JSON.stringify(fixed)}`);
+    document.getElementById("mind-fix-notes").value=notes;
+    document.getElementById("btn-to-node4").disabled=false;
+    setStatus("节点3完成，可导出修正版XMind或进入节点4");
+  }catch(e){setStatus("出错："+e.message);}
+  busy=false;
+}
+async function runNode4(){
+  if(!ST.mindFixed&&!ST.mindData){setStatus("请先完成节点3");return;}
+  if(busy)return;busy=true;
+  setStatus(getModelCfg().label+" 生成测试用例...",true);
+  try{
+    const mind=ST.mindFixed||ST.mindData;
+    const res=await callAI(`你是Liene/极印 Photo APP的QA测试工程师（维护人：王姿翰）。根据测试思维导图生成完整结构化测试用例。
+格式（每条）：
+编号：TC-XXX
+标题：[一句话描述]
+步骤：
+1. 步骤1
+2. 步骤2
+预期结果：
+1. 对应步骤1的预期
+2. 对应步骤2的预期
+---
+要求：步骤与预期一一对应；至少10条用例；覆盖正常/边界/异常流程；中文。`,
+      "思维导图：\n"+JSON.stringify(mind,null,2));
+    ST.cases=res;
+    document.getElementById("cases-output").value=res;
+    document.getElementById("btn-to-node5").disabled=false;
+    setStatus("节点4完成，可进入节点5评审");
+  }catch(e){setStatus("出错："+e.message);}
+  busy=false;
+}
+async function runNode5(){
+  if(!ST.cases){setStatus("请先完成节点4");return;}
+  if(busy)return;busy=true;
+  setStatus(getModelCfg().label+" 评审测试用例...",true);
+  try{
+    const [review,issues]=await Promise.all([
+      callAI(`资深QA评审专家。评审维度：1.覆盖完整性 2.步骤清晰度 3.预期结果准确性 4.边界场景 5.可执行性
+最后一行：[覆盖度:高/中/低] [清晰度:高/中/低] [可执行性:高/中/低]
+中文简洁`,"测试用例：\n\n"+ST.cases),
+      callAI(`找出具体问题，格式：问题N：[用例编号] - [问题描述] - [修改建议]
+无问题则输出"用例质量良好"。中文。`,"测试用例：\n\n"+ST.cases)
+    ]);
+    ST.casesReview=review;
+    document.getElementById("cases-review").value=review.replace(/\[[^\]]+\][\s\S]*$/m,"").trim();
+    document.getElementById("cases-issues").value=issues;
+    renderScores("cases-scores",review);
+    document.getElementById("btn-to-node6").disabled=false;
+    setStatus("节点5完成，可进入节点6修正");
+  }catch(e){setStatus("出错："+e.message);}
+  busy=false;
+}
+async function runNode6(){
+  if(!ST.cases){setStatus("请先完成节点5");return;}
+  if(busy)return;busy=true;
+  setStatus(getModelCfg().label+" 自动修正用例...",true);
+  document.getElementById("cases-before").value=ST.cases;
+  try{
+    const issues=document.getElementById("cases-issues").value;
+    const [fixed,notes]=await Promise.all([
+      callAI(`Liene/极印 Photo APP QA工程师。根据评审意见修正测试用例。
+保持原格式，修正问题、补充遗漏场景，输出完整修正后用例，中文。`,
+        `原始用例：\n${ST.cases}\n\n评审问题：\n${issues}`),
+      callAI("说明对测试用例做了哪些修正（3-5条，格式：修正N：xxx，中文）",`问题清单：${issues}`)
+    ]);
+    ST.casesFinal=fixed;
+    document.getElementById("cases-after").value=fixed;
+    document.getElementById("cases-fix-notes").value=notes;
+    jumpNode(6);
+    setStatus("全流程完成！记得填写模块名称并保存到知识库 ✓");
+  }catch(e){setStatus("出错："+e.message);}
+  busy=false;
+}
+
+/* ── 思维导图渲染 ── */
+function renderMindMap(containerId,data){
+  const container=document.getElementById(containerId);
+  if(!data||(!data.root&&!data.name))return;
+  const W=540,nodeH=20,gap=3;
+  const l1C=["#185FA5","#0F6E56","#534AB7","#854F0B","#3B6D11","#993C1D"];
+  const l1Cf=["#E6F1FB","#E1F5EE","#EEEDFE","#FAEEDA","#EAF3DE","#FAECE7"];
+  function countLeaves(n){return !n.children||!n.children.length?1:n.children.reduce((s,c)=>s+countLeaves(c),0);}
+  let items=[];
+  function layout(node,depth,midY){
+    const leaves=countLeaves(node);
+    const totalH=leaves*(nodeH+gap)-gap;
+    const x=depth===0?W/2-60:depth===1?60:depth===2?200:330;
+    const w=depth===0?120:depth===1?110:depth===2?110:120;
+    items.push({node,depth,x,y:midY-nodeH/2,w,totalH});
+    if(node.children&&node.children.length){
+      let cy=midY-totalH/2;
+      node.children.forEach(c=>{
+        const cl=countLeaves(c),ch=cl*(nodeH+gap)-gap;
+        layout(c,depth+1,cy+ch/2);cy+=ch+gap;
+      });
+    }
+  }
+  const total=countLeaves(data),totalH=total*(nodeH+gap)-gap;
+  layout(data,0,totalH/2);
+  const l1nodes=data.children||[];
+  function tagL1(node,idx){items.filter(it=>it.node===node).forEach(it=>it.l1idx=idx);if(node.children)node.children.forEach(c=>tagL1(c,idx));}
+  items.filter(it=>it.depth===0).forEach(it=>it.l1idx=0);
+  l1nodes.forEach((c,i)=>tagL1(c,i));
+  let minY=Infinity,maxY=-Infinity;
+  items.forEach(it=>{minY=Math.min(minY,it.y);maxY=Math.max(maxY,it.y+nodeH);});
+  const offY=16-minY,svgH=maxY-minY+32;
+  let paths="",nodes="";
+  items.forEach(it=>{
+    const rx=it.x,ry=it.y+offY;
+    const ci=(it.l1idx||0)%l1C.length;
+    const col=it.depth===0?"#378ADD":l1C[ci];
+    const fill=it.depth===0?"#378ADD":it.depth===1?l1C[ci]:l1Cf[ci];
+    const tc=it.depth<=1?"#fff":"#1a1a18",fw=it.depth<=1?"500":"400";
+    const lbl=it.node.name||it.node.root||"",short=lbl.length>13?lbl.substring(0,12)+"…":lbl;
+    nodes+=`<g><rect x="${rx}" y="${ry}" width="${it.w}" height="${nodeH}" rx="4" fill="${fill}" stroke="${col}" stroke-width="0.5"/>
+<text x="${rx+it.w/2}" y="${ry+nodeH/2}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="${tc}" font-weight="${fw}" font-family="-apple-system,sans-serif">${short}</text></g>`;
+    if(it.depth>0){
+      const par=items.find(p=>p.node.children&&p.node.children.includes(it.node));
+      if(par){const px=par.x+par.w,py=par.y+offY+nodeH/2,cx=rx,cy=ry+nodeH/2,mx=(px+cx)/2;
+        paths+=`<path d="M${px} ${py} C${mx} ${py} ${mx} ${cy} ${cx} ${cy}" fill="none" stroke="${col}" stroke-width="0.6" opacity="0.5"/>`;
+      }
+    }
+  });
+  container.innerHTML=`<svg width="100%" viewBox="0 0 ${W} ${svgH}" xmlns="http://www.w3.org/2000/svg">${paths}${nodes}</svg>`;
+}
+</script>
+</body>
+</html>
