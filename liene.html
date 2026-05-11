@@ -680,7 +680,13 @@ async function loadKnowledge(){
   try{
     const idx=await ghGet("knowledge/index.json");
     if(idx){
-      ST.kb=JSON.parse(idx.content);
+      try{
+        const parsed=JSON.parse(idx.content);
+        ST.kb=Array.isArray(parsed)?parsed:[];
+      }catch(e){
+        ST.kb=[];
+        setStatus("知识库索引格式有误，已重置："+e.message);
+      }
       renderKbList();
       setStatus(`知识库加载完成，共 ${ST.kb.length} 个模块`);
     } else {
@@ -793,7 +799,14 @@ async function openKbDetail(name,platform='app'){
     currentKbModule={name,platform,sha:f.sha,data};
     document.getElementById("kb-detail").style.display="block";
     document.getElementById("kb-detail-title").textContent=`模块详情 — ${name}`;
-    document.getElementById("kb-detail-cases").value=data.cases||"";
+    document.getElementById("kb-detail-cases").value=Array.isArray(data.cases)
+  ?data.cases.map((c,i)=>`【${i+1}】${c.title||""}
+步骤：
+${c.steps||""}
+预期结果：
+${c.expected||""}
+${"─".repeat(40)}`).join("\n")
+  :(data.cases||"");
     document.getElementById("kb-detail-note").value=data.note||"";
     document.getElementById("kb-detail-issues").value=data.casesReview||"（暂无评审记录）";
     // 渲染历史版本
@@ -823,7 +836,7 @@ async function saveDetailEdit(){
   const note=document.getElementById("kb-detail-note").value;
   setStatus("保存修改中...",true);
   try{
-    const data={...currentKbModule.data,cases:newCases,note,updatedAt:new Date().toLocaleDateString("zh-CN"),caseCount:newCases.split("---").length};
+    const data={...currentKbModule.data,cases:newCases,note,updatedAt:new Date().toLocaleDateString("zh-CN"),caseCount:Array.isArray(newCases)?newCases.length:newCases.split("---").length};
     await ghPut(moduleToGhPath(currentKbModule.platform,currentKbModule.name)+".json",
       JSON.stringify(data,null,2),"edit: "+currentKbModule.name,currentKbModule.sha);
     // 更新index
@@ -920,7 +933,7 @@ async function loadPendingList(){
           <button onclick="approveModule('${item._filename}')" style="font-size:11px;padding:4px 10px;margin-left:auto;background:var(--green-bg);color:var(--green-t);border-color:var(--green-bd)">✓ 通过</button>
           <button onclick="rejectModule('${item._filename}')" style="font-size:11px;padding:4px 10px;background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1">✗ 拒绝</button>
         </div>
-        <div style="font-size:11px;color:var(--text3);max-height:60px;overflow:hidden;background:var(--bg2);padding:6px 8px;border-radius:4px">${(item.cases||"").substring(0,200)}...</div>
+        <div style="font-size:11px;color:var(--text3);max-height:60px;overflow:hidden;background:var(--bg2);padding:6px 8px;border-radius:4px">${(Array.isArray(item.cases)?item.cases.map(c=>c.title||"").join(" / "):(item.cases||"")).toString().substring(0,200)}...</div>
       </div>`).join("");
   }catch(e){document.getElementById("pending-list").innerHTML=`<div style="font-size:12px;color:var(--text3);padding:8px">加载失败：${e.message}</div>`;}
 }
@@ -948,7 +961,8 @@ async function approveModule(filename){
     const idxFile=await ghGet("knowledge/index.json");
     let idx=idxFile?JSON.parse(idxFile.content):[];
     const ei=idx.findIndex(m=>m.name===data.name&&m.platform===data.platform);
-    const entry={name:data.name,platform:data.platform,updatedAt:featureData.updatedAt,caseCount:(data.cases||"").split("---").length};
+    const caseCount=Array.isArray(data.cases)?data.cases.length:(data.cases||"").split("---").length;
+    const entry={name:data.name,platform:data.platform,updatedAt:featureData.updatedAt,caseCount};
     if(ei>=0)idx[ei]=entry; else idx.push(entry);
     await ghPut("knowledge/index.json",JSON.stringify(idx,null,2),`index: approve ${data.platform}/${data.name}`,idxFile?.sha);
     // 删除pending文件
@@ -1033,7 +1047,7 @@ async function saveToGithub(){
     const idxFile=await ghGet("knowledge/index.json");
     let idx=idxFile?JSON.parse(idxFile.content):[];
     const ei=idx.findIndex(m=>m.name===moduleName&&m.platform===platform);
-    const entry={name:moduleName,platform,updatedAt:now,iteration,caseCount:finalCases.split("---").length};
+    const entry={name:moduleName,platform,updatedAt:now,iteration,caseCount:Array.isArray(finalCases)?finalCases.length:finalCases.split("---").length};
     if(ei>=0)idx[ei]=entry; else idx.push(entry);
     await ghPut("knowledge/index.json",JSON.stringify(idx,null,2),`index: update ${platform}/${moduleName}`,idxFile?.sha);
     ST.kb=idx;
