@@ -173,6 +173,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <button class="btnsm" onclick="loadKnowledge()" id="btn-load-kb">读取知识库</button>
     <button class="btnsm" onclick="toggleAdminMode()" id="btn-admin" style="background:var(--amber-bg);color:var(--amber-t);border-color:var(--amber-bd)">审核员模式</button>
   </div>
+  <div class="cfgrow" style="margin-top:4px">
+    <label>Liene Token</label>
+    <input type="password" class="cfg-key" id="robot-token-input" placeholder="向管理员获取Liene Token..." autocomplete="off">
+    <button class="btnsm" onclick="saveRobotToken()">保存</button>
+    <span id="robot-token-status" style="font-size:11px;color:var(--text3)">未配置</span>
+  </div>
   <div id="admin-token-row" style="display:none;margin-top:8px">
     <div class="cfgrow">
       <label>审核员 Token</label>
@@ -544,7 +550,19 @@ function getKey(){
   const v=document.getElementById("api-key").value.trim();
   return v||localStorage.getItem(getModelCfg().storeKey)||"";
 }
-const ROBOT_TOKEN="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";
+function getRobotToken(){
+  return localStorage.getItem("qa_robot_token")||"";
+}
+function saveRobotToken(){
+  const t=document.getElementById("robot-token-input")?.value.trim();
+  if(t){
+    localStorage.setItem("qa_robot_token",t);
+    document.getElementById("robot-token-status").textContent="✓ 已配置";
+    document.getElementById("robot-token-status").style.color="var(--green-t)";
+    setStatus("Liene Token 已保存到本地浏览器");
+  }
+}
+const ROBOT_TOKEN=""; // 已废弃，改用 getRobotToken()
 function updateRoleUI(){
   const isAdmin=isAdminMode();
   const btnSubmit=document.getElementById("btn-submit-review");
@@ -561,6 +579,7 @@ async function submitForReview(){
   if(!moduleName){setStatus("请先填写模块名称");return;}
   const finalCases=document.getElementById("cases-after").value||document.getElementById("cases-output").value;
   if(!finalCases){setStatus("暂无用例可提交");return;}
+  if(!getRobotToken()){setStatus("请先在配置栏填写「Liene Token」并保存");return;}
   setStatus("提交审核中...",true);
   try{
     const now=new Date().toLocaleDateString("zh-CN");
@@ -579,7 +598,7 @@ async function submitForReview(){
     const repo=getGhRepo();
     const r=await fetch(`https://api.github.com/repos/${repo}/contents/${pendingPath}`,{
       method:"PUT",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+ROBOT_TOKEN},
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+getRobotToken()},
       body:JSON.stringify({message:`pending: ${platform}/${moduleName} ${now}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(pendingData,null,2))))})
     });
     if(!r.ok){const e=await r.json();throw new Error(e.message);}
@@ -616,6 +635,13 @@ window.addEventListener("load",()=>{
   onModelChange();
   const t=localStorage.getItem("qa_gh_token");
   if(t&&document.getElementById("gh-token")) document.getElementById("gh-token").value=t;
+  // 加载团队Token状态
+  const rt=localStorage.getItem("qa_robot_token");
+  if(rt){
+    document.getElementById("robot-token-input").value=rt;
+    document.getElementById("robot-token-status").textContent="✓ 已配置";
+    document.getElementById("robot-token-status").style.color="var(--green-t)";
+  }
   jumpNode(1);
   loadKnowledge();
   // 根据身份显示对应按钮
@@ -1811,7 +1837,7 @@ async function saveImportedCases(){
       const repo=getGhRepo();
       const r=await fetch(`https://api.github.com/repos/${repo}/contents/${pendingPath}`,{
         method:"PUT",
-        headers:{"Content-Type":"application/json","Authorization":"Bearer "+ROBOT_TOKEN},
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+getRobotToken()},
         body:JSON.stringify({message:`pending import: ${platform}/${moduleName} ${now}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(pendingData,null,2))))})
       });
       if(!r.ok){const e=await r.json();throw new Error(e.message);}
