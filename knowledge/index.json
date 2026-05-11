@@ -75,5 +75,12 @@
     "updatedAt": "2026/5/11",
     "iteration": "2026-W03",
     "caseCount": 3
+  },
+  {
+    "name": "Liene Photo PC /报错/切割引擎相关错误",
+    "platform": "pc",
+    "updatedAt": "2026/5/11",
+    "iteration": "2026-W03",
+    "caseCount": 31
   }
 ]
