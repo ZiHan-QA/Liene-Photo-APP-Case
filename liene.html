@@ -665,7 +665,9 @@ async function ghPut(path,content,message,sha){
   if(!token) throw new Error("请先配置 GitHub Token");
   const body={message,content:btoa(unescape(encodeURIComponent(content)))};
   if(sha) body.sha=sha;
-  const r=await fetch(`https://api.github.com/repos/${repo}/contents/${path}`,{
+  // 对路径每段编码，保留斜杠
+  const encodedPath=path.split("/").map(p=>encodeURIComponent(p)).join("/");
+  const r=await fetch(`https://api.github.com/repos/${repo}/contents/${encodedPath}`,{
     method:"PUT",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
     body:JSON.stringify(body)
@@ -1381,8 +1383,8 @@ function buildModulePath(platform,moduleName){
 
 // 把模块路径转为GitHub存储路径（斜杠变目录）
 function moduleToGhPath(platform, moduleName){
-  // 对路径每段进行编码，保留斜杠作为目录分隔
-  const parts=moduleName.split("/").map(p=>encodeURIComponent(p.trim())).filter(p=>p);
+  // 只替换文件系统不允许的字符，保留中文和正常字符
+  const parts=moduleName.split("/").map(p=>p.trim().replace(/[\\:*?"<>|]/g,"_")).filter(p=>p);
   return `knowledge/${platform}/${parts.join("/")}`;
 }
 
