@@ -1,0 +1,31 @@
+{
+  "name": "Liene Photo PC /登录/大陆登录页",
+  "platform": "app",
+  "updatedAt": "2026/5/11",
+  "iteration": "2026-W03",
+  "cases": [
+    {
+      "title": "登录页【X】",
+      "precondition": "",
+      "steps": "1. 当前未登录 \n2. 点击 liene photo 图标 \n3. 点击 立即登录 \n4. 点击 中国大陆  确定 \n5. 点击“x”",
+      "expected": "1. 无 \n2. 无 \n3. 跳转到选择国家选择页 \n4. 跳转到登录页面 \n5. 关闭应用",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /登录/大陆登录页"
+    },
+    {
+      "title": "手机号登录页【X】",
+      "precondition": "",
+      "steps": "1. 当前未登录 \n2. 点击 liene photo 图标 \n3. 点击 立即登录 \n4. 点击中国大陆  确定 \n5. 勾选隐私政策、用户协议 \n6. 点击手机号登录 \n7. 点击“X”",
+      "expected": "1. 无 \n2. 无 \n3. 跳转到选择国家选择页 \n4. 跳转到登录页面 \n5. 勾选成功 \n6. 跳转到手机号登录页面 \n7. 关闭应用",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /登录/大陆登录页"
+    }
+  ],
+  "history": []
+}
