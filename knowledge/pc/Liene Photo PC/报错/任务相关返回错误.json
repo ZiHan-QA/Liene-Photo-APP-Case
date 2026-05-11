@@ -1,0 +1,141 @@
+{
+  "name": "Liene Photo PC /报错/任务相关返回错误",
+  "platform": "pc",
+  "updatedAt": "2026/5/11",
+  "iteration": "2026-W03",
+  "cases": [
+    {
+      "title": "属性不支持-8001",
+      "precondition": "",
+      "steps": "1. 制造属性不支持报错（无法模拟-通过app模拟） \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n任务出错，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "文件长度过大溢出-8002",
+      "precondition": "",
+      "steps": "1. 制造文件长度过大溢出报错（无法模拟-通过app模拟） \n2. 点击知道了",
+      "expected": "1. 弹出弹窗：提示\n文件过大，请选择其他文件。\n【知道了】 \n2. 弹窗消失，停留此页面",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "内存错误-8003",
+      "precondition": "",
+      "steps": "1. 制造内存错误报错（无法模拟-通过app模拟） \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n任务出错，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "系统错误-8004",
+      "precondition": "",
+      "steps": "1. 制造系统错误报错（无法模拟-通过app模拟） \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n任务出错，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "目前无任务-8005",
+      "precondition": "",
+      "steps": "1. 同时2个手机，手机1取消同时，手机2再取消，IOS摇一摇可以模拟 \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n任务出错，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "任务队列满-8006（不适用）",
+      "precondition": "",
+      "steps": "1. 固件支持2个任务，发送第三个任务 \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n打印机正忙，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "任务队列空-8007（不适用）",
+      "precondition": "",
+      "steps": "1. 暂定（使用app模拟） \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n打印机正忙，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "文件数据太大-8008（不适用）",
+      "precondition": "",
+      "steps": "1. Android发一个超过1M的图片 \n2. 点击知道了",
+      "expected": "1. 弹出弹窗：提示\n文件过大，请选择其他文件。\n【知道了】 \n2. 弹窗消失，停留此页面",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "数据传输错误-8009（不适用）",
+      "precondition": "",
+      "steps": "1. 制造数据传输错误报错（无法模拟-通过app模拟） \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n传输出错，请至任务队列重新发起打印。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "打印机正忙-8011（不适用）",
+      "precondition": "",
+      "steps": "1. 发送任务后，传输的过程中不能取消，点取消 \n2. 点击任务队列 \n3. 触发不了，用app的dibug页面模拟",
+      "expected": "1. 弹出弹窗：提示\n打印机正忙，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列 \n3. 无",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "json解析出错-8012（不适用）",
+      "precondition": "",
+      "steps": "1. 制造jason解析出错报错（无法模拟-通过app模拟） \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n解析出错，请重启打印机后再试。\n【知道了】 \n2. 弹窗消失，停留此页面",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    },
+    {
+      "title": "任务数据传输超时-8013（不适用）",
+      "precondition": "",
+      "steps": "1. 依靠IOS摇一摇 模拟，只creat 不send \n2. 点击任务队列",
+      "expected": "1. 弹出弹窗：提示\n传输超时，请至任务队列查看。\n【任务队列】 \n2. 进入任务队列",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/任务相关返回错误"
+    }
+  ],
+  "history": []
+}
