@@ -89,5 +89,12 @@
     "updatedAt": "2026/5/11",
     "iteration": "2026-W03",
     "caseCount": 12
+  },
+  {
+    "name": "Liene Photo PC /报错/色带相关错误",
+    "platform": "pc",
+    "updatedAt": "2026/5/11",
+    "iteration": "2026-W03",
+    "caseCount": 15
   }
 ]
