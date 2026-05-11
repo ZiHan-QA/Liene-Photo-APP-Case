@@ -1,0 +1,108 @@
+{
+  "name": "Liene Photo PC /固件升级",
+  "platform": "pc",
+  "updatedAt": "2026/5/11",
+  "iteration": "2026-W03",
+  "cases": [
+    {
+      "title": "打印机设置页-固件升级-当前有升级-固件升级弹窗",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，首次进入程序 \n2. 点击顶部打印机状态信息右侧 下拉展示按钮 \n3. 打印机设备列表页选择可更新的打印机点击“查看详细” \n4. 点击打印机信息页“固件升级” \n5. 点击右上角【×】 \n6. 【开始升级】 \n7. 固件升级完成点击右上角“×”或右下角“完成”",
+      "expected": "1. 无 \n2. 展示打印机设备列表页\nLiene PixCut S1-XXXX \n·待机（状态信息）          查看详细＞\nLiene PixCut S1-XXXX \n·未连接（状态信息）       查看详细＞ \n3. 弹出打印机信息页\nLiene PixCut S1-XXXX  待机（状态信息）      ×\n固件信息                   设备型号             序列号\nx.x.xx_xxxx 固件升级  xxxxxx               xxxxxxxxxxxxxxx\n                                                       删除打印机 \n4. 弹出固件升级弹窗\n【固件升级】                                              ×\n升级过程，确保通电且连接USB线，不要离开当前页面（红色展示）\n目标版本：x.x.xx_xxxx\n当前版本版本：x.x.xx_xxxx\n                                                               开始升级 \n5. 弹窗关闭，返回画布 \n6. 打开固件升级浮层\n【固件升级】                                  ×\n升级过程，确保通电且连接USB线，不要离开当前页面\n正在安装\n（进度条 XX%）\n目标版本：xxx\n当前版本版本：xxx\n                                     升级中（灰置） \n7. 弹窗关闭，返回画布，升级后可以正常使用",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-在线",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击固件信息旁边蓝色升级图标，点击【固件升级】 \n3. 点击【开始升级】 \n4. 观察设备状态",
+      "expected": "1. 向下弹出打印机设备列表页 \n2. 打开固件升级浮层\n【固件升级】  右上角：×\nUpgrading...Stay on this page keep power and USB connected\n(升级过程，确保通电且连接USB线，不要离开当前页面)\n目标版本：xxx\n当前版本：xxx\n右下角：【开始升级】 \n3. 进入固件升级流程，中间展示下载进度，升级成功后展示升级成功页面 \n4. 右上角打印机状态变为正在升级固件。。。",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-固件升级中-取消",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击有红点提示的打印机“查看详情”，点击【固件升级】 \n3. 点击开始升级 \n4. 点击完成 \n5. 安装过程中，查看安装页面",
+      "expected": "1. 向下弹出打印机设备列表页，页面有小红点提示 \n2. 弹出固件升级弹窗\n【固件升级】                                              ×\n升级过程，确保通电且连接USB线，不要离开当前页面（红色展示）\n目标版本：x.x.xx_xxxx\n当前版本版本：x.x.xx_xxxx\n                                                               开始升级 \n3. 进入固件升级流程 \n4. 无法点击，置灰 \n5. 页面无取消按钮",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-打印机正忙",
+      "precondition": "",
+      "steps": "1. 已连接打印机，打印机处于忙碌状态，当前有固件升级版本，点击右上角打印机状态 \n2. 点击有红点提示的打印机“查看详情”，进行【固件升级】",
+      "expected": "1. 向下弹出打印机设备列表页，页面有小红点提示 \n2. toast“仅空闲状态下可以升级固件，请检查后重试”",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-下载失败",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击有红点提示的打印机“查看详情”，点击【固件升级】 \n3. 点击开始升级 \n4. 断开网络或制造弱网",
+      "expected": "1. 向下弹出打印机设备列表页，页面有小红点提示 \n2. 打开固件升级浮层 \n3. 进入固件升级流程 \n4. 下载失败，弹出弹窗：【Note】下载失败【Got it】",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-打印机离线",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击【固件信息】 \n3. 点击开始升级 \n4. 下载或安装的过程中，断开与打印机的连接 \n5. 未连接点击【重试】 \n6. 连接后点击【重试】",
+      "expected": "1. 向下弹出打印机设置页，页面【固件信息】有小红点提示 \n2. 打开固件升级浮层 \n3. 进入固件升级流程 \n4. 弹出弹窗：\n【固件升级】\n升级过程，确保通电且连接USB线，不要离开当前页面\n     安装失败\n目标版本：\n当前版本：\n【重试】 \n5. 弹出toast：仅空闲状态下可以升级固件，请检查后重试 \n6. 进入固件升级页面",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-通过其它设备发送固件升级",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，使用其他设备给打印机发送固件升级 \n2. 观察右上角打印机状态",
+      "expected": "1. 无 \n2. 右上角打印机状态变为“正在升级固件。。。”",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-强制固件升级",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有强制固件升级版本，查看APP \n2. 点击开始升级 \n3. 不升级，关闭程序（windows：任务管理器，macOS：option+command+esc），再次打开程序",
+      "expected": "1. 【固件升级】                                              \n升级过程，确保通电且连接USB线，不要离开当前页面（红色展示）\n目标版本：x.x.xx_xxxx\n当前版本版本：x.x.xx_xxxx\n                                                               开始升级 \n2. 打开固件升级浮层，进入固件升级流程 \n3. 继续弹出此弹窗",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前无升级",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前无固件升级版本，打印机设备列表页点击“查看详情＞”",
+      "expected": "1. 展示打印机固件信息\n固件版本后无固件升级按钮\n展示打印机信息页\nLiene PixCut S1-XXXX  待机（状态信息）      ×\n固件信息                   设备型号             序列号\nx.x.xx_xxxx 固件升级（这个没有了）  xxxxxx               xxxxxxxxxxxxxxx\n                                                       删除打印机",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /固件升级"
+    }
+  ],
+  "history": []
+}
