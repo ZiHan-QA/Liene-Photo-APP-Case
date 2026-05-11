@@ -222,6 +222,20 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <span class="chip" onclick="useSamplePrd()">载入示例PRD</span>
     <span class="chip" onclick="clearAll()">重置全部</span>
     <span class="chip" onclick="showKbPanel()">知识库历史</span>
+    <span class="chip" onclick="showRelatedPanel()">选择关联模块</span>
+  </div>
+  <!-- 关联模块选择面板 -->
+  <div id="related-panel" style="display:none;margin-bottom:12px">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#7F77DD"></div>关联模块 <span style="font-size:11px;color:var(--text3);margin-left:4px">AI评审和生成用例时会自动带入关联模块的历史上下文</span></div>
+      <div id="related-module-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-top:4px">
+        <div style="font-size:12px;color:var(--text3);padding:8px">请先读取知识库，或知识库为空</div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3)">
+        已选：<span id="related-selected-count">0</span> 个关联模块
+        <span id="related-selected-names" style="color:var(--purple-t);margin-left:8px"></span>
+      </div>
+    </div>
   </div>
   <!-- 知识库历史面板 -->
   <div id="kb-panel" style="display:none;margin-bottom:12px">
@@ -470,6 +484,22 @@ button:disabled{opacity:.4;cursor:not-allowed}
         <textarea id="kb-detail-issues" readonly style="min-height:80px;font-size:11px"></textarea>
       </div>
     </div>
+    <div class="pa">
+      <div class="panel full">
+        <div class="ph"><div class="dot" style="background:#7F77DD"></div>关联模块
+          <span style="font-size:11px;color:var(--text3);margin-left:4px">AI生成用例时会带入关联模块的历史上下文</span>
+        </div>
+        <div id="kb-detail-related" style="display:flex;gap:6px;flex-wrap:wrap;min-height:32px;padding:4px 0"></div>
+        <div class="ph" style="margin-top:6px;gap:6px;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--text2);flex-shrink:0">添加关联</label>
+          <select id="kb-related-select" style="font-size:12px;padding:5px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);flex:1;min-width:200px">
+            <option value="">— 从知识库选择模块 —</option>
+          </select>
+          <button onclick="addRelatedToDetail()" style="font-size:12px;padding:5px 12px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer">添加</button>
+          <button onclick="saveRelatedModules()" style="font-size:12px;padding:5px 12px;border-radius:var(--r);background:var(--text);color:var(--bg);border:none;cursor:pointer">保存关联 ↑</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -489,7 +519,7 @@ const PLATFORM_COLORS={
   pc:{bg:"var(--purple-bg)",t:"var(--purple-t)",bd:"var(--purple-bd)"},
   admin:{bg:"var(--amber-bg)",t:"var(--amber-t)",bd:"var(--amber-bd)"}
 };
-const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[]};
+const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[],relatedModules:[]};
 let busy=false;
 const nodeColors=[
   {bg:"var(--blue-bg)",bd:"var(--blue-bd)",nt:"var(--blue-t)"},
@@ -829,6 +859,16 @@ ${"─".repeat(40)}`).join("\n")
           ${h.issues?`<div style="font-size:11px;color:var(--text3);margin-top:4px;max-height:40px;overflow:hidden">${h.issues.substring(0,100)}...</div>`:""}
         </div>`).join("");
     }
+    // 渲染关联模块
+    const related=data.relatedModules||[];
+    renderDetailRelated(related);
+    // 填充关联模块下拉
+    const relSel=document.getElementById("kb-related-select");
+    if(relSel){
+      relSel.innerHTML=`<option value="">— 从知识库选择模块 —</option>`+
+        ST.kb.filter(m=>!(m.name===name&&m.platform===platform))
+          .map(m=>`<option value="${escAttr(m.name)}|${m.platform||'app'}">${PLATFORM_LABELS[m.platform||'app']} / ${m.name}</option>`).join("");
+    }
     setStatus("已加载："+name);
     document.getElementById("kb-detail").scrollIntoView({behavior:"smooth"});
   }catch(e){setStatus("读取失败："+e.message);}
@@ -1017,6 +1057,12 @@ async function loadModule(name, platform){
       setStatus(`已加载「${PLATFORM_LABELS[platform||"app"]} / ${name}」，可在此基础上继续迭代`);
       document.getElementById("module-name").value=name;
       if(platform) document.getElementById("module-platform").value=platform;
+      // 自动恢复关联模块
+      if(data.relatedModules&&data.relatedModules.length>0){
+        ST.relatedModules=data.relatedModules;
+        syncRelatedSaveList();
+        setStatus(`已加载「${name}」及 ${data.relatedModules.length} 个关联模块`);
+      }
     }
   }catch(e){setStatus("加载失败："+e.message);}
 }
@@ -1047,6 +1093,7 @@ async function saveToGithub(){
       mindReview:ST.mindReview,
       cases:finalCases,
       casesReview:ST.casesReview,
+      relatedModules:ST.relatedModules.map(m=>({name:m.name,platform:m.platform})),
       history:history.slice(-5)
     };
     await ghPut(featurePath,JSON.stringify(featureData,null,2),`feat: update ${platform}/${moduleName} ${now}`,existing?.sha);
@@ -1310,7 +1357,91 @@ function skipToNode4(){
 
 function buildKbContext(){
   if(!ST.kb||ST.kb.length===0) return "";
-  return "已评审功能模块："+ST.kb.map(m=>m.name+"（"+m.updatedAt+"，"+m.caseCount+"条用例）").join("；");
+  let ctx="已评审功能模块："+ST.kb.map(m=>m.name+"（"+m.updatedAt+"，"+m.caseCount+"条用例）").join("；");
+  // 加入关联模块的详细上下文
+  if(ST.relatedModules&&ST.relatedModules.length>0){
+    ctx+="\n\n【关联模块详细上下文】";
+    ST.relatedModules.forEach(m=>{
+      if(m.cases){
+        const casesArr=Array.isArray(m.cases)?m.cases:[];
+        ctx+=`\n\n▶ ${m.name}（${casesArr.length}条用例，最后更新：${m.updatedAt}）`;
+        // 取前5条用例标题作为上下文
+        casesArr.slice(0,5).forEach(c=>{
+          ctx+=`\n  - ${c.title||""}`;
+        });
+        if(casesArr.length>5) ctx+=`\n  - ... 共${casesArr.length}条`;
+      }
+    });
+  }
+  return ctx;
+}
+
+function showRelatedPanel(){
+  const p=document.getElementById("related-panel");
+  p.style.display=p.style.display==="none"?"block":"none";
+  renderRelatedModuleList();
+}
+
+function renderRelatedModuleList(){
+  const list=document.getElementById("related-module-list");
+  if(!ST.kb||ST.kb.length===0){
+    list.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:8px">请先点击「读取知识库」</div>`;
+    return;
+  }
+  list.innerHTML=ST.kb.map(m=>{
+    const isSelected=ST.relatedModules.some(r=>r.name===m.name&&r.platform===m.platform);
+    const pc=PLATFORM_COLORS[m.platform||"app"];
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border-radius:var(--r);border:0.5px solid ${isSelected?pc.bd:"var(--border)"};cursor:pointer" onclick="toggleRelatedModule('${escAttr(m.name)}','${m.platform||"app"}',this)">
+      <div style="width:14px;height:14px;border-radius:3px;border:1.5px solid ${isSelected?pc.bd:"var(--border2)"};background:${isSelected?pc.bg:"transparent"};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        ${isSelected?`<span style="color:${pc.t};font-size:10px">✓</span>`:""}
+      </div>
+      <span style="font-size:12px;font-weight:500">${m.name}</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:auto">${PLATFORM_LABELS[m.platform||"app"]} · ${m.caseCount||0}条</span>
+    </div>`;
+  }).join("");
+  updateRelatedCount();
+  syncRelatedSaveList();
+}
+
+async function toggleRelatedModule(name, platform, el){
+  const idx=ST.relatedModules.findIndex(r=>r.name===name&&r.platform===platform);
+  if(idx>=0){
+    ST.relatedModules.splice(idx,1);
+  } else {
+    // 加载该模块的用例详情
+    setStatus("加载关联模块："+name+"...",true);
+    try{
+      const f=await ghGet(moduleToGhPath(platform,name)+".json");
+      if(f){
+        const data=JSON.parse(f.content);
+        ST.relatedModules.push({name,platform,cases:data.cases,updatedAt:data.updatedAt});
+      }
+    }catch(e){
+      ST.relatedModules.push({name,platform,cases:[],updatedAt:""});
+    }
+    setStatus("关联模块已加载："+name);
+  }
+  renderRelatedModuleList();
+}
+
+function updateRelatedCount(){
+  const cnt=document.getElementById("related-selected-count");
+  const names=document.getElementById("related-selected-names");
+  if(cnt) cnt.textContent=ST.relatedModules.length;
+  if(names) names.textContent=ST.relatedModules.map(m=>m.name).join("、");
+}
+
+function syncRelatedSaveList(){
+  const list=document.getElementById("related-save-list");
+  if(!list) return;
+  if(ST.relatedModules.length===0){
+    list.innerHTML=`<span style="font-size:11px;color:var(--text3)">未选择关联模块</span>`;
+  } else {
+    list.innerHTML=ST.relatedModules.map(m=>{
+      const pc=PLATFORM_COLORS[m.platform||"app"];
+      return `<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${pc.bg};color:${pc.t};border:0.5px solid ${pc.bd}">${m.name}</span>`;
+    }).join("");
+  }
 }
 
 /* ── UI 工具 ── */
@@ -1361,7 +1492,11 @@ function useSamplePrd(){
 }
 function clearAll(){
   if(!confirm("确认重置所有数据？"))return;
-  Object.keys(ST).forEach(k=>{if(k!=="kb")ST[k]=typeof ST[k]==="string"?"":null;});
+  Object.keys(ST).forEach(k=>{
+    if(k==="kb") return;
+    if(k==="relatedModules") {ST[k]=[]; return;}
+    ST[k]=typeof ST[k]==="string"?"":null;
+  });
   ["prd-text","prd-review","prd-supplement","mind-review","mind-fix-notes",
    "cases-output","cases-review","cases-issues","cases-before","cases-after","cases-fix-notes"]
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
