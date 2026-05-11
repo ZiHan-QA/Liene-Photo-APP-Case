@@ -246,7 +246,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="pa">
     <div class="panel full">
       <div class="ph"><div class="dot" style="background:#EF9F27"></div>人工补齐 PRD <span class="hbadge">人工节点</span></div>
-      <textarea id="prd-supplement" placeholder="根据评审意见补充：新增场景、澄清歧义、补充边界条件...&#10;无需补充则直接点击下方按钮" style="min-height:60px"></textarea>
+      <textarea id="prd-supplement" placeholder="根据评审意见补充：新增场景、澄清歧义、补充边界条件...&#10;无需补充则直接点击下方按钮" style="min-height:200px;resize:vertical"></textarea>
       <div class="br"><button class="btnp" id="btn-to-node2" disabled onclick="goToNode2()">确认补齐，生成思维导图 ↗</button></div>
     </div>
   </div>
@@ -544,7 +544,7 @@ function getKey(){
   const v=document.getElementById("api-key").value.trim();
   return v||localStorage.getItem(getModelCfg().storeKey)||"";
 }
-const ROBOT_TOKEN="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";
+const ROBOT_TOKEN="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";
 function updateRoleUI(){
   const isAdmin=isAdminMode();
   const btnSubmit=document.getElementById("btn-submit-review");
@@ -564,7 +564,8 @@ async function submitForReview(){
   setStatus("提交审核中...",true);
   try{
     const now=new Date().toLocaleDateString("zh-CN");
-    const pendingPath=`knowledge/pending/${platform}_${moduleName}_${Date.now()}.json`;
+    const safeModuleName=moduleName.replace(/\//g,"__").replace(/\s/g,"_");
+    const pendingPath=`knowledge/pending/${platform}_${safeModuleName}_${Date.now()}.json`;
     const pendingData={
       name:moduleName,platform,submittedAt:now,
       submitter:"anonymous",
@@ -1804,7 +1805,8 @@ async function saveImportedCases(){
     // 普通用户：提交待审核
     setStatus("提交历史用例待审核...",true);
     try{
-      const pendingPath=`knowledge/pending/${platform}_${moduleName.replace(/\//g,"_")}_${Date.now()}.json`;
+      const safeModuleName2=moduleName.replace(/\//g,"__").replace(/\s/g,"_");
+      const pendingPath=`knowledge/pending/${platform}_${safeModuleName2}_${Date.now()}.json`;
       const pendingData={name:moduleName,platform,submittedAt:now,iteration,cases:importedCases,caseCount:importedCases.length,status:"pending",source:"import"};
       const repo=getGhRepo();
       const r=await fetch(`https://api.github.com/repos/${repo}/contents/${pendingPath}`,{
