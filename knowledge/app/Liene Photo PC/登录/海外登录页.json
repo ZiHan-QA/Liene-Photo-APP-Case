@@ -1,0 +1,42 @@
+{
+  "name": "Liene Photo PC /登录/海外登录页",
+  "platform": "app",
+  "updatedAt": "2026/5/11",
+  "iteration": "2026-W03",
+  "cases": [
+    {
+      "title": "登录页【X】",
+      "precondition": "",
+      "steps": "1. 当前未登录 \n2. 点击 liene photo 图标 \n3. 点击 立即登录 \n4. 点击美国 \n5. 点击 确定 \n6. 点击“x”",
+      "expected": "1. 无 \n2. 无 \n3. 跳转到选择国家选择页 \n4. 选择美国成功 \n5. 跳转到登录页面 \n6. 关闭应用",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /登录/海外登录页"
+    },
+    {
+      "title": "邮箱登录页【X】",
+      "precondition": "",
+      "steps": "1. 当前未登录 \n2. 点击 liene photo 图标 \n3. 点击 立即登录 \n4. 点击美国 \n5. 点击 确定 \n6. 勾选隐私政策、用户协议 \n7. 点击邮箱登录 \n8. 点击“X”",
+      "expected": "1. 无 \n2. 无 \n3. 跳转到选择国家选择页 \n4. 选择美国成功 \n5. 跳转到登录页面 \n6. 勾选成功 \n7. 跳转到邮箱登录页面 \n8. 关闭应用",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /登录/海外登录页"
+    },
+    {
+      "title": "邮箱登录页UI",
+      "precondition": "",
+      "steps": "1. 当前未登录，点击 liene photo 图标 \n2. 点击 立即登录-美国 确定 \n3. 勾选隐私政策、用户协议，点击邮箱登录 \n4. 点击输入框 \n5. 点击输入框（Tab 键进入）",
+      "expected": "1. 无 \n2. 跳转到登录页面 \n3. 跳转到邮箱登录页面 \n4. 光标出现\n边框颜色变化（高亮） \n5. Tab 键可切换输入框",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /登录/海外登录页"
+    }
+  ],
+  "history": []
+}
