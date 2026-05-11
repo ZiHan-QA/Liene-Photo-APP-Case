@@ -82,5 +82,12 @@
     "updatedAt": "2026/5/11",
     "iteration": "2026-W03",
     "caseCount": 31
+  },
+  {
+    "name": "Liene Photo PC /报错/任务相关返回错误",
+    "platform": "pc",
+    "updatedAt": "2026/5/11",
+    "iteration": "2026-W03",
+    "caseCount": 12
   }
 ]
