@@ -33,12 +33,5 @@
     "updatedAt": "2026/5/11",
     "iteration": "2026-W03",
     "caseCount": 9
-  },
-  {
-    "name": "Liene Photo PC /图片上传同步",
-    "platform": "pc",
-    "updatedAt": "2026/5/11",
-    "iteration": "2026-W03",
-    "caseCount": 37
   }
 ]
