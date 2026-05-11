@@ -1,0 +1,42 @@
+{
+  "name": "Liene Photo PC /报错/PLT相关错误",
+  "platform": "pc",
+  "updatedAt": "2026/5/11",
+  "iteration": "2026-W03",
+  "cases": [
+    {
+      "title": "切割异常-8301【PLT文件出错，难以模拟，可以跳过】",
+      "precondition": "",
+      "steps": "1. app里面模拟，PLT超出尺寸 \n2. 点击知道了 \n3. 重新发送任务",
+      "expected": "1. 弹出弹窗报错\n切割异常\n请至任务队列重新发起打印。\n【知道了】 \n2. 停留此页面？ \n3. 打印结果符合预期",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/PLT相关错误"
+    },
+    {
+      "title": "图片解析出错-8302【PLT文件出错，难以模拟，可以跳过】",
+      "precondition": "",
+      "steps": "1. app里面模拟，图片解析出错 \n2. 点击知道了 \n3. 重新发送任务",
+      "expected": "1. 弹出弹窗报错\n图片解析出错\n请至任务队列重新发起打印。\n【知道了】 \n2. 停留此页面？ \n3. 打印结果符合预期",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/PLT相关错误"
+    },
+    {
+      "title": "切割超时-8303【PLT文件出错，难以模拟，可以跳过】",
+      "precondition": "",
+      "steps": "1. app里面模拟，PLT数据不全 \n2. 点击知道了 \n3. 重新发送任务",
+      "expected": "1. 弹出弹窗报错\n切割超时\n请至任务队列重新发起。\n【知道了】 \n2. 停留此页面？ \n3. 打印结果符合预期",
+      "importance": "P0",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "阚智霖",
+      "module": "Liene Photo PC /报错/PLT相关错误"
+    }
+  ],
+  "history": []
+}
