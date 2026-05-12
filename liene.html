@@ -259,7 +259,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
     </div>
     <div class="panel">
       <div class="ph"><div class="dot" style="background:#639922"></div>评审结果</div>
-      <textarea id="prd-review" placeholder="AI 将分析完整性、歧义点、缺失场景、测试风险..." readonly style="min-height:160px"></textarea>
+      <textarea id="prd-review" placeholder="AI 将分析完整性、歧义点、缺失场景、测试风险..." readonly style="min-height:240px;resize:vertical"></textarea>
       <div class="scrow" id="prd-scores"></div>
     </div>
   </div>
@@ -275,18 +275,45 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <!-- ── 节点2 ── -->
 <div class="view" id="view-2">
   <div class="sdiv">节点2 — 思维导图生成与评审</div>
+  <!-- 版本选择提示 -->
+  <div id="mind-version-tip" style="display:none;margin-bottom:8px">
+    <div style="font-size:12px;padding:8px 12px;border-radius:var(--r);background:var(--blue-bg);color:var(--blue-t);border:0.5px solid var(--blue-bd)">
+      已选择：<strong id="mind-version-selected"></strong> — 点击下方「进入节点3」继续流程
+    </div>
+  </div>
   <div class="pa">
-    <div class="panel">
-      <div class="ph"><div class="dot" style="background:#1D9E75"></div>思维导图（可视化）</div>
-      <div class="mwrap" id="mind-svg-wrap"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">生成中...</div></div>
+    <!-- 版本A：纯净版 -->
+    <div class="panel" id="mind-panel-a" style="border:0.5px solid var(--border)">
+      <div class="ph">
+        <div class="dot" style="background:#1D9E75"></div>
+        版本A — 纯净版
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">仅基于PRD + 人工补充</span>
+        <button id="btn-select-a" onclick="selectMindVersion('a')" style="margin-left:auto;font-size:11px;padding:3px 10px;background:var(--teal-bg);color:var(--teal-t);border-color:var(--teal-bd)">使用此版本</button>
+      </div>
+      <div class="mwrap" id="mind-svg-wrap-a"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">生成中...</div></div>
       <div class="br" style="margin-top:4px">
-        <button onclick="runMindGen()">重新生成</button>
-        <button onclick="exportXmind()" id="btn-xmind">导出 .xmind ↓</button>
+        <button onclick="exportXmindVersion('a')">导出 .xmind ↓</button>
       </div>
     </div>
-    <div class="panel">
-      <div class="ph"><div class="dot" style="background:#639922"></div>导图评审</div>
-      <textarea id="mind-review" placeholder="AI 将评审覆盖度、结构合理性、遗漏测试点..." readonly style="min-height:160px"></textarea>
+    <!-- 版本B：增强版 -->
+    <div class="panel" id="mind-panel-b" style="border:0.5px solid var(--border)">
+      <div class="ph">
+        <div class="dot" style="background:#534AB7"></div>
+        版本B — 增强版
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">PRD + 补充 + AI评审意见</span>
+        <button id="btn-select-b" onclick="selectMindVersion('b')" style="margin-left:auto;font-size:11px;padding:3px 10px;background:var(--purple-bg);color:var(--purple-t);border-color:var(--purple-bd)">使用此版本</button>
+      </div>
+      <div class="mwrap" id="mind-svg-wrap-b"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">生成中...</div></div>
+      <div class="br" style="margin-top:4px">
+        <button onclick="exportXmindVersion('b')">导出 .xmind ↓</button>
+      </div>
+    </div>
+  </div>
+  <!-- 评审结果（版本B生成后展示） -->
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:#639922"></div>AI评审意见（版本B参考依据）</div>
+      <textarea id="mind-review" placeholder="AI 将评审覆盖度、结构合理性、遗漏测试点..." readonly style="min-height:120px;resize:vertical"></textarea>
       <div class="scrow" id="mind-scores"></div>
     </div>
   </div>
@@ -299,8 +326,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
       </div>
       <input type="file" id="xmind-input" accept=".xmind" style="display:none" onchange="handleXmind(this)">
       <div class="br">
-        <button class="btnp" id="btn-to-node3" disabled onclick="jumpNode(3)">进入节点3：自动修正导图 ↗</button>
-        <button id="btn-to-node4-direct" disabled onclick="skipToNode4()">直接生成用例（跳过修正）↗</button>
+        <button class="btnp" id="btn-to-node4-direct" disabled onclick="skipToNode4()">直接生成用例 ↗</button>
+        <button id="btn-to-node3" disabled onclick="jumpNode(3)" style="font-size:11px;opacity:.8">需要AI补充遗漏？进入节点3 →</button>
       </div>
     </div>
   </div>
@@ -338,7 +365,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="pa">
     <div class="panel full">
       <div class="ph"><div class="dot" style="background:#378ADD"></div>测试用例</div>
-      <textarea id="cases-output" placeholder="将根据修正后的思维导图自动生成结构化测试用例..." readonly style="min-height:280px"></textarea>
+      <textarea id="cases-output" placeholder="将根据修正后的思维导图自动生成结构化测试用例..." readonly style="min-height:400px;resize:vertical"></textarea>
       <div class="br">
         <button class="btnp" onclick="runNode4()">生成测试用例 ↗</button>
         <button id="btn-to-node5" disabled onclick="jumpNode(5)">进入节点5：评审用例 ↗</button>
@@ -355,12 +382,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="pa">
     <div class="panel">
       <div class="ph"><div class="dot" style="background:#639922"></div>评审意见</div>
-      <textarea id="cases-review" placeholder="AI 将从覆盖完整性、步骤清晰度、边界场景、可执行性等维度评审..." readonly style="min-height:200px"></textarea>
+      <textarea id="cases-review" placeholder="AI 将从覆盖完整性、步骤清晰度、边界场景、可执行性等维度评审..." readonly style="min-height:280px;resize:vertical"></textarea>
       <div class="scrow" id="cases-scores"></div>
     </div>
     <div class="panel">
       <div class="ph"><div class="dot" style="background:#D4537E"></div>问题清单</div>
-      <textarea id="cases-issues" placeholder="具体问题与修改建议..." readonly style="min-height:200px"></textarea>
+      <textarea id="cases-issues" placeholder="具体问题与修改建议..." readonly style="min-height:280px;resize:vertical"></textarea>
     </div>
   </div>
   <div class="br">
@@ -402,17 +429,23 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="pa">
     <div class="panel">
       <div class="ph"><div class="dot" style="background:#888"></div>修正前</div>
-      <textarea id="cases-before" readonly style="min-height:220px"></textarea>
+      <textarea id="cases-before" readonly style="min-height:320px;resize:vertical"></textarea>
     </div>
     <div class="panel">
       <div class="ph"><div class="dot" style="background:#1D9E75"></div>修正后（最终版）</div>
-      <textarea id="cases-after" placeholder="修正后的完整测试用例..." readonly style="min-height:220px"></textarea>
+      <textarea id="cases-after" placeholder="修正后的完整测试用例..." readonly style="min-height:320px;resize:vertical"></textarea>
     </div>
   </div>
   <div class="pa">
     <div class="panel full">
       <div class="ph"><div class="dot" style="background:#7F77DD"></div>修正说明</div>
       <textarea id="cases-fix-notes" readonly style="min-height:60px"></textarea>
+      <!-- 迭代diff -->
+      <div id="iteration-diff" style="display:none;margin-top:8px">
+        <div class="ph"><div class="dot" style="background:#378ADD"></div>与上一版本对比</div>
+        <div id="diff-summary" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"></div>
+        <div id="diff-detail" style="margin-top:6px;max-height:120px;overflow-y:auto;font-size:11px;color:var(--text2)"></div>
+      </div>
       <div class="ph" style="margin-top:4px;gap:8px;flex-wrap:wrap">
         <label style="font-size:12px;color:var(--text2);flex-shrink:0">端</label>
         <select id="module-platform" style="font-size:12px;padding:6px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text)">
@@ -446,6 +479,14 @@ button:disabled{opacity:.4;cursor:not-allowed}
         已评审模块
         <span class="kbadge" id="kb-mgr-count">—</span>
         <button onclick="loadKnowledge()" style="font-size:11px;padding:3px 10px;margin-left:auto">刷新</button>
+      </div>
+      <!-- 我的提交（普通用户可见） -->
+      <div id="my-submissions-section" style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:500;padding:6px 10px;border-radius:var(--r);background:var(--blue-bg);color:var(--blue-t);border:0.5px solid var(--blue-bd);margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          📋 我的提交记录
+          <span id="my-submissions-count" style="font-size:11px;opacity:.8"></span>
+        </div>
+        <div id="my-submissions-list" style="display:flex;flex-direction:column;gap:4px"></div>
       </div>
       <!-- 待审核区（审核员可见） -->
       <div id="pending-section" style="display:none;margin-bottom:12px">
@@ -519,7 +560,7 @@ const PLATFORM_COLORS={
   pc:{bg:"var(--purple-bg)",t:"var(--purple-t)",bd:"var(--purple-bd)"},
   admin:{bg:"var(--amber-bg)",t:"var(--amber-t)",bd:"var(--amber-bd)"}
 };
-const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[],relatedModules:[]};
+const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindDataA:null,mindDataB:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[],relatedModules:[]};
 let busy=false;
 const nodeColors=[
   {bg:"var(--blue-bg)",bd:"var(--blue-bd)",nt:"var(--blue-t)"},
@@ -632,7 +673,11 @@ async function submitForReview(){
       body:JSON.stringify({message:`pending: ${platform}/${moduleName} ${now}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(pendingData,null,2))))})
     });
     if(!r.ok){const e=await r.json();throw new Error(e.message);}
-    setStatus(`「${PLATFORM_LABELS[platform]} / ${moduleName}」已提交，等待审核员审核 ✓`);
+    // 记录提交状态到localStorage
+    const submissions=JSON.parse(localStorage.getItem("qa_submissions")||"[]");
+    submissions.unshift({name:moduleName,platform,submittedAt:now,status:"pending"});
+    localStorage.setItem("qa_submissions",JSON.stringify(submissions.slice(0,20)));
+    setStatus(`「${PLATFORM_LABELS[platform]} / ${moduleName}」已提交审核 ✓ 可在知识库管理页查看提交状态`);
   }catch(e){setStatus("提交失败："+e.message);}
 }
 function getGhToken(){
@@ -1021,6 +1066,7 @@ async function approveModule(filename){
     ST.kb=idx;
     renderKbMgr();
     loadPendingList();
+    // 更新提交状态（如果提交者的localStorage还在）
     setStatus(`「${PLATFORM_LABELS[data.platform]} / ${data.name}」已通过审核并加入知识库 ✓`);
   }catch(e){setStatus("审核失败："+e.message);}
 }
@@ -1305,8 +1351,21 @@ async function handleXmind(input){
     area.textContent="已载入 XMind："+f.name+" ("+childEls.length+" 个一级节点)";
     // 人工XMind视为已修正版本，ST.mindFixed = ST.mindData
     ST.mindFixed = json;
+    ST.mindDataA = json;
+    ST.mindDataB = null;
+    // 隐藏版本选择，显示人工版本提示
+    const panelA=document.getElementById("mind-panel-a");
+    const panelB=document.getElementById("mind-panel-b");
+    if(panelA) panelA.style.display="none";
+    if(panelB) panelB.style.display="none";
+    const tip=document.getElementById("mind-version-tip");
+    const name=document.getElementById("mind-version-selected");
+    if(tip) tip.style.display="block";
+    if(name) name.textContent="人工修改版本（已上传XMind）";
+    renderMindMap("mind-svg-wrap-a",json);
     document.getElementById("btn-to-node4-direct").disabled=false;
-    setStatus("XMind 已载入 ✓ 可进入节点3继续修正，或直接生成用例");
+    document.getElementById("btn-to-node3").disabled=false;
+    setStatus("XMind 已载入 ✓ 可直接生成用例，或进入节点3补充遗漏测试点");
   }catch(e){
     area.classList.remove("ok");
     area.textContent="解析失败："+e.message;
@@ -1334,20 +1393,55 @@ async function callAI(system,user){
   if(provider==="claude"){
     const r=await fetch(apiUrl,{method:"POST",
       headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},
-      body:JSON.stringify({model:mid,max_tokens:1500,system:fullSystem,messages:[{role:"user",content:user}]})});
+      body:JSON.stringify({model:mid,max_tokens:8000,system:fullSystem,messages:[{role:"user",content:user}]})});
     const d=await r.json();
     if(!d.content) throw new Error(d.error?.message||"Anthropic API 请求失败");
     return d.content.map(b=>b.text||"").join("");
   } else {
     const r=await fetch(apiUrl,{method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-      body:JSON.stringify({model:mid,max_tokens:1500,
+      body:JSON.stringify({model:mid,max_tokens:8000,
         messages:[{role:"system",content:fullSystem},{role:"user",content:user}]})});
     const d=await r.json();
     if(!d.choices) throw new Error(d.error?.message||"API 请求失败");
     return d.choices[0]?.message?.content||"";
   }
 }
+function selectMindVersion(ver){
+  const data=ver==="a"?ST.mindDataA:ST.mindDataB;
+  if(!data) return;
+  ST.mindData=data;
+  ST.mindFixed=null; // 清空之前的修正版本
+  // 高亮选中版本
+  const panelA=document.getElementById("mind-panel-a");
+  const panelB=document.getElementById("mind-panel-b");
+  const teal="0.5px solid var(--teal-bd)";
+  const purple="0.5px solid var(--purple-bd)";
+  const normal="0.5px solid var(--border)";
+  panelA.style.border=ver==="a"?teal:normal;
+  panelB.style.border=ver==="b"?purple:normal;
+  // 显示提示
+  const tip=document.getElementById("mind-version-tip");
+  const name=document.getElementById("mind-version-selected");
+  tip.style.display="block";
+  name.textContent=ver==="a"?"版本A（纯净版）":"版本B（增强版）";
+  setStatus(`已选择${ver==="a"?"版本A（纯净版）":"版本B（增强版）"}，可进入节点3修正或直接生成用例`);
+}
+
+function exportXmindVersion(ver){
+  const data=ver==="a"?ST.mindDataA:ST.mindDataB;
+  if(!data){setStatus("暂无导图可导出");return;}
+  const origData=ST.mindData;
+  ST.mindData=data;
+  exportXmind();
+  ST.mindData=origData;
+}
+
+// 兼容旧的mind-svg-wrap id
+function getMindSvgWrap(){
+  return document.getElementById("mind-svg-wrap")||document.getElementById("mind-svg-wrap-a");
+}
+
 function skipToNode4(){
   // 人工XMind或AI导图直接跳节点4，mindFixed=mindData
   if(!ST.mindFixed) ST.mindFixed=ST.mindData;
@@ -1355,24 +1449,31 @@ function skipToNode4(){
   runNode4();
 }
 
-function buildKbContext(){
+function buildKbContext(phase){
+  // phase: "review"=节点1评审, "mindmap"=节点2导图, "cases"=节点4生成用例, "review_cases"=节点5评审用例
   if(!ST.kb||ST.kb.length===0) return "";
   let ctx="已评审功能模块："+ST.kb.map(m=>m.name+"（"+m.updatedAt+"，"+m.caseCount+"条用例）").join("；");
-  // 加入关联模块的详细上下文
-  if(ST.relatedModules&&ST.relatedModules.length>0){
-    ctx+="\n\n【关联模块详细上下文】";
-    ST.relatedModules.forEach(m=>{
-      if(m.cases){
-        const casesArr=Array.isArray(m.cases)?m.cases:[];
-        ctx+=`\n\n▶ ${m.name}（${casesArr.length}条用例，最后更新：${m.updatedAt}）`;
-        // 取前5条用例标题作为上下文
-        casesArr.slice(0,5).forEach(c=>{
-          ctx+=`\n  - ${c.title||""}`;
-        });
-        if(casesArr.length>5) ctx+=`\n  - ... 共${casesArr.length}条`;
-      }
-    });
-  }
+  if(!ST.relatedModules||ST.relatedModules.length===0) return ctx;
+
+  ctx+="\n\n【关联模块上下文】";
+  ST.relatedModules.forEach(m=>{
+    const casesArr=Array.isArray(m.cases)?m.cases:[];
+    if(phase==="review"){
+      // 节点1：带入关联模块的已知测试问题
+      ctx+=`\n\n▶ 关联模块「${m.name}」已有 ${casesArr.length} 条用例，评审PRD时请关注与此模块的交叉影响`;
+    } else if(phase==="cases"){
+      // 节点4：带入用例标题，避免重复
+      ctx+=`\n\n▶ 关联模块「${m.name}」已有用例（避免重复，重点覆盖交叉场景）：`;
+      casesArr.slice(0,8).forEach(c=>{ ctx+=`\n  - ${c.title||""}`; });
+      if(casesArr.length>8) ctx+=`\n  - ... 共${casesArr.length}条`;
+    } else if(phase==="review_cases"){
+      // 节点5：检查交叉场景覆盖
+      ctx+=`\n\n▶ 关联模块「${m.name}」需检查以下交叉场景是否已覆盖：`;
+      casesArr.filter(c=>(c.title||"").includes("【通用】")).slice(0,5).forEach(c=>{
+        ctx+=`\n  - ${c.title||""}`;
+      });
+    }
+  });
   return ctx;
 }
 
@@ -1469,6 +1570,7 @@ function jumpNode(n){
     document.getElementById("view-7").classList.add("active");
     nbKb.style.borderWidth="1.5px";
     renderKbMgr();
+    renderMySubmissions();
     if(isAdminMode()) loadPendingList();
   } else {
     document.getElementById("view-7").classList.remove("active");
@@ -1501,10 +1603,17 @@ function clearAll(){
    "cases-output","cases-review","cases-issues","cases-before","cases-after","cases-fix-notes"]
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   ["prd-scores","mind-scores","cases-scores"].forEach(id=>document.getElementById(id).innerHTML="");
-  ["mind-svg-wrap","mind-before-wrap","mind-after-wrap"].forEach(id=>{
+  ["mind-svg-wrap-a","mind-svg-wrap-b","mind-before-wrap","mind-after-wrap"].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">—</div>`;
   });
+  ST.mindDataA=null; ST.mindDataB=null;
+  const tip=document.getElementById("mind-version-tip");
+  if(tip) tip.style.display="none";
+  const pA=document.getElementById("mind-panel-a");
+  const pB=document.getElementById("mind-panel-b");
+  if(pA) pA.style.border="0.5px solid var(--border)";
+  if(pB) pB.style.border="0.5px solid var(--border)";
   ["btn-to-node2","btn-to-node3","btn-to-node4","btn-to-node5","btn-to-node6"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.disabled=true;
   });
@@ -1599,6 +1708,7 @@ async function runNode1(){
   if(busy)return;busy=true;
   setStatus(getModelCfg().label+" 正在评审PRD...",true);
   try{
+    const kbCtx1=buildKbContext("review");
     const res=await callAI(`你是Liene/极印Photo APP的资深QA测试工程师。从测试视角评审PRD，输出评审报告，包含以下五个维度：
 
 1. 测试范围：本次改动涉及哪些功能模块，改动边界在哪里
@@ -1629,9 +1739,16 @@ async function runNode1(){
 function goToNode2(){ST.prdSupplement=document.getElementById("prd-supplement").value;jumpNode(2);runMindGen();}
 async function runMindGen(){
   if(busy)return;busy=true;
-  setStatus(getModelCfg().label+" 生成思维导图...",true);
+  // 恢复版本面板显示（如果之前上传过XMind）
+  const panelA=document.getElementById("mind-panel-a");
+  const panelB=document.getElementById("mind-panel-b");
+  if(panelA) panelA.style.display="";
+  if(panelB) panelB.style.display="";
+  setStatus(getModelCfg().label+" 生成两个版本的思维导图...",true);
   try{
     const combined=ST.prdText+(ST.prdSupplement?"\n\n【补充内容】\n"+ST.prdSupplement:"");
+    // 先生成版本A（纯净版）
+    setStatus("生成版本A（纯净版）...",true);
     const res=await callAI(`你是Liene/极印Photo APP的QA测试架构师。根据PRD生成详细测试思维导图JSON。
 只输出JSON，不要任何说明文字或markdown代码块。
 
@@ -1658,11 +1775,33 @@ async function runMindGen(){
     try{json=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}
     catch(e){json={root:"功能测试",children:[{name:"功能测试",children:[{name:"基础流程",children:[]}]},{name:"边界测试",children:[{name:"边界值",children:[]}]},{name:"异常测试",children:[{name:"异常场景",children:[]}]}]};}
     ST.mindData=json;
-    renderMindMap("mind-svg-wrap",json);
+    ST.mindDataA=json;
+    renderMindMap("mind-svg-wrap-a",json);
+    // 生成版本B（带AI评审意见）
+    setStatus("生成AI评审意见...",true);
     await runMindReview(json);
+    setStatus("生成版本B（增强版）...",true);
+    const resB=await callAI(`你是Liene/极印Photo APP的QA测试架构师。根据PRD和AI评审意见生成详细测试思维导图JSON。
+只输出JSON，不要任何说明文字或markdown代码块。
+格式与输入相同：{"root":"功能名称","children":[...]}
+在版本A基础上，重点补充评审意见中提到的遗漏测试点和边界场景。`,
+      `PRD内容：
+${combined}
+
+版本A导图：
+${JSON.stringify(json,null,2)}
+
+评审发现的遗漏：
+${ST.mindReview}`);
+    let jsonB;
+    try{jsonB=JSON.parse(resB.replace(/\`\`\`json|\`\`\`/g,"").trim());}catch(e){jsonB=json;}
+    ST.mindDataB=jsonB;
+    renderMindMap("mind-svg-wrap-b",jsonB);
+    // 默认选版本A
     document.getElementById("btn-to-node3").disabled=false;
     document.getElementById("btn-to-node4-direct").disabled=false;
-    setStatus("节点2完成，可下载XMind修改后上传，或直接进入节点3修正/节点4生成用例");
+    document.getElementById("mind-version-tip").style.display="none";
+    setStatus("两个版本生成完成，请选择使用哪个版本继续 ↑");
   }catch(e){setStatus("出错："+e.message);}
   busy=false;
 }
@@ -1731,7 +1870,8 @@ async function runNode4(){
 - test_type：手工测试/自动化测试
 - 至少生成12条，覆盖正常/边界/异常流程
 - 中文输出`,
-      "思维导图：\n"+JSON.stringify(mind,null,2));
+      "思维导图：\n"+JSON.stringify(mind,null,2)+
+      (buildKbContext("cases")?"\n\n"+buildKbContext("cases"):""));
     let cases=[];
     try{cases=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}
     catch(e){
@@ -1754,9 +1894,9 @@ async function runNode5(){
   setStatus(getModelCfg().label+" 评审测试用例...",true);
   try{
     const [review,issues]=await Promise.all([
-      callAI(`资深QA评审专家。评审维度：1.覆盖完整性 2.步骤清晰度 3.预期结果准确性 4.边界场景 5.可执行性
+      callAI(`资深QA评审专家。评审维度：1.覆盖完整性 2.步骤清晰度 3.预期结果准确性 4.边界场景 5.可执行性 6.关联模块交叉场景覆盖
 最后一行：[覆盖度:高/中/低] [清晰度:高/中/低] [可执行性:高/中/低]
-中文简洁`,"测试用例：\n\n"+JSON.stringify(ST.cases)),
+中文简洁`,"测试用例：\n\n"+JSON.stringify(ST.cases)+(buildKbContext("review_cases")?"\n\n"+buildKbContext("review_cases"):"")),
       callAI(`找出测试用例具体问题，格式：问题N：[用例标题] - [问题描述] - [修改建议]
 无问题则输出"用例质量良好"。中文。`,"测试用例：\n\n"+JSON.stringify(ST.cases))
     ]);
@@ -1793,6 +1933,8 @@ async function runNode6(){
     ).join("\n");
     document.getElementById("cases-fix-notes").value=notes;
     jumpNode(6);
+    // 迭代diff
+    await computeIterationDiff(fixedCases);
     setStatus("全流程完成！共"+fixedCases.length+"条用例，记得导出Excel并保存到知识库 ✓");
   }catch(e){setStatus("出错："+e.message);}
   busy=false;
