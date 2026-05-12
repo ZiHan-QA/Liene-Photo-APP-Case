@@ -1869,15 +1869,19 @@ ${ST.mindReview}`);
     setStatus("两个版本生成完成，请选择使用哪个版本继续 ↑");
   }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
-async function runMindReview(json){
+async function runMindReview(json, version){
   const res=await callAI(`你是测试覆盖度评审专家。评审测试思维导图：
 1. 覆盖完整性 2. 结构合理性 3. 遗漏的具体测试点
 最后一行输出：[覆盖度:高/中/低] [结构:高/中/低] [遗漏风险:高/中/低]
 中文简洁`,"思维导图：\n"+JSON.stringify(json,null,2));
-  ST.mindReview=res.replace(/\[[^\]]+\][\s\S]*$/m,"").trim();
-  // mind-review已拆分为版本A/B，ST.mindReview只做内部记录用
-  // 实际写入在版本对应的 mind-review-a / mind-review-b
-  renderScores("mind-scores",res);
+  const body=res.replace(/\[[^\]]+\][\s\S]*$/m,"").trim();
+  ST.mindReview=body;
+  // 写入对应版本的评审框
+  const reviewId=version==="b"?"mind-review-b":"mind-review-a";
+  const scoresId=version==="b"?"mind-scores-b":"mind-scores-a";
+  const el=document.getElementById(reviewId);
+  if(el) el.value=body;
+  renderScores(scoresId,res);
 }
 async function runNode3(){
   if(!ST.mindData){setStatus("请先完成节点2");return;}
