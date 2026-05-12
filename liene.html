@@ -294,6 +294,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <div class="br" style="margin-top:4px">
         <button onclick="exportXmindVersion('a')">导出 .xmind ↓</button>
       </div>
+      <div class="ph" style="margin-top:6px"><div class="dot" style="background:#639922"></div>版本A 评审意见</div>
+      <textarea id="mind-review-a" placeholder="版本A的AI评审意见..." readonly style="min-height:100px;resize:vertical"></textarea>
+      <div class="scrow" id="mind-scores-a"></div>
     </div>
     <!-- 版本B：增强版 -->
     <div class="panel" id="mind-panel-b" style="border:0.5px solid var(--border)">
@@ -307,16 +310,12 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <div class="br" style="margin-top:4px">
         <button onclick="exportXmindVersion('b')">导出 .xmind ↓</button>
       </div>
+      <div class="ph" style="margin-top:6px"><div class="dot" style="background:#639922"></div>版本B 评审意见</div>
+      <textarea id="mind-review-b" placeholder="版本B的AI评审意见..." readonly style="min-height:100px;resize:vertical"></textarea>
+      <div class="scrow" id="mind-scores-b"></div>
     </div>
   </div>
-  <!-- 评审结果（版本B生成后展示） -->
-  <div class="pa">
-    <div class="panel full">
-      <div class="ph"><div class="dot" style="background:#639922"></div>AI评审意见（版本B参考依据）</div>
-      <textarea id="mind-review" placeholder="AI 将评审覆盖度、结构合理性、遗漏测试点..." readonly style="min-height:120px;resize:vertical"></textarea>
-      <div class="scrow" id="mind-scores"></div>
-    </div>
-  </div>
+
   <div class="pa">
     <div class="panel full">
       <div class="ph"><div class="dot" style="background:#EF9F27"></div>上传人工修改的 XMind 文件 <span class="hbadge">可选·人工节点</span></div>
@@ -457,6 +456,17 @@ button:disabled{opacity:.4;cursor:not-allowed}
         <label style="font-size:12px;color:var(--text2);flex-shrink:0">模块路径</label>
         <input type="text" id="module-name" placeholder="例如：Liene Photo APP/首页/Kiwi" style="flex:1;min-width:240px">
         <span style="font-size:11px;color:var(--text3)">用 / 分隔层级</span>
+      </div>
+      <div class="ph" style="margin-top:4px;gap:8px;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text2);flex-shrink:0">维护人</label>
+        <input type="text" id="maintainer-name" placeholder="填写你的名字" style="min-width:160px;font-size:12px;padding:6px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text)">
+        <button class="btnsm" onclick="saveMaintainer()">保存</button>
+      </div>
+      <div class="ph" style="margin-top:4px;gap:8px;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text2);flex-shrink:0">关联模块</label>
+        <div id="related-save-list" style="display:flex;gap:6px;flex-wrap:wrap;flex:1">
+          <span style="font-size:11px;color:var(--text3)">未选择（可在节点1选择关联模块）</span>
+        </div>
       </div>
       <div class="br">
         <button class="btnp" onclick="runNode6()">执行修正 ↗</button>
@@ -1348,8 +1358,7 @@ async function handleXmind(input){
     const childEls=[...rootEl.querySelectorAll(":scope > children > topics > topic")];
     const json={root:rootTitle,children:childEls.map(parseNode)};
     ST.mindData=json;
-    document.getElementById("mind-raw")&&(document.getElementById("mind-raw").value=JSON.stringify(json,null,2));
-    renderMindMap("mind-svg-wrap",json);
+    renderMindMap("mind-svg-wrap-a",json);
     area.textContent="已载入 XMind："+f.name+" ("+childEls.length+" 个一级节点)";
     // 人工XMind视为已修正版本，ST.mindFixed = ST.mindData
     ST.mindFixed = json;
@@ -1792,7 +1801,7 @@ async function runMindGen(){
     renderMindMap("mind-svg-wrap-a",json);
     // 生成版本B（带AI评审意见）
     setStatus("生成AI评审意见...",true);
-    await runMindReview(json);
+    await runMindReview(json,"a");
     setStatus("生成版本B（增强版）...",true);
     let jsonB=json; // 默认降级为版本A
     try{
@@ -1815,10 +1824,12 @@ ${ST.mindReview}`);
     }
     ST.mindDataB=jsonB;
     renderMindMap("mind-svg-wrap-b",jsonB);
-    // 默认选版本A
+    // 版本B也做评审
+    setStatus("评审版本B...",true);
+    await runMindReview(jsonB,"b");
+    // 不默认选版本，需用户手动选择
     document.getElementById("btn-to-node3").disabled=false;
     document.getElementById("btn-to-node4-direct").disabled=false;
-    document.getElementById("mind-version-tip").style.display="none";
     setStatus("两个版本生成完成，请选择使用哪个版本继续 ↑");
   }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
