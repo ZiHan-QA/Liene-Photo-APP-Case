@@ -350,6 +350,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <div class="ph"><div class="dot" style="background:#7F77DD"></div>修正说明</div>
       <textarea id="mind-fix-notes" readonly style="min-height:70px"></textarea>
       <div class="br">
+        <button onclick="jumpNode(2)" style="font-size:11px">← 返回节点2</button>
         <button class="btnp" onclick="runNode3()">执行自动修正 ↗</button>
         <button onclick="exportXmind('fixed')" id="btn-xmind-fixed">导出修正版 .xmind ↓</button>
         <button id="btn-to-node4" disabled onclick="jumpNode(4)">进入节点4：生成测试用例 ↗</button>
