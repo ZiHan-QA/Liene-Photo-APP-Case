@@ -1645,7 +1645,7 @@ function clearAll(){
     if(k==="relatedModules") {ST[k]=[]; return;}
     ST[k]=typeof ST[k]==="string"?"":null;
   });
-  ["prd-text","prd-review","prd-supplement","mind-review","mind-fix-notes",
+  ["prd-text","prd-review","prd-supplement","mind-review-a","mind-review-b","mind-fix-notes",
    "cases-output","cases-review","cases-issues","cases-before","cases-after","cases-fix-notes"]
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   ["prd-scores","mind-scores","cases-scores"].forEach(id=>document.getElementById(id).innerHTML="");
@@ -1875,7 +1875,8 @@ async function runMindReview(json){
 最后一行输出：[覆盖度:高/中/低] [结构:高/中/低] [遗漏风险:高/中/低]
 中文简洁`,"思维导图：\n"+JSON.stringify(json,null,2));
   ST.mindReview=res.replace(/\[[^\]]+\][\s\S]*$/m,"").trim();
-  document.getElementById("mind-review").value=ST.mindReview;
+  // mind-review已拆分为版本A/B，ST.mindReview只做内部记录用
+  // 实际写入在版本对应的 mind-review-a / mind-review-b
   renderScores("mind-scores",res);
 }
 async function runNode3(){
