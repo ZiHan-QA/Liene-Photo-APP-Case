@@ -278,24 +278,25 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <!-- 版本选择提示 -->
   <div id="mind-version-tip" style="display:none;margin-bottom:8px">
     <div style="font-size:12px;padding:8px 12px;border-radius:var(--r);background:var(--blue-bg);color:var(--blue-t);border:0.5px solid var(--blue-bd)">
-      已选择：<strong id="mind-version-selected"></strong> — 点击下方「进入节点3」继续流程
+      已选择：<strong id="mind-version-selected"></strong> — 点击下方按钮继续流程
     </div>
   </div>
-  <div class="pa">
+  <!-- 三栏对比 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px" id="mind-compare-grid">
     <!-- 版本A：纯净版 -->
     <div class="panel" id="mind-panel-a" style="border:0.5px solid var(--border)">
       <div class="ph">
         <div class="dot" style="background:#1D9E75"></div>
         版本A — 纯净版
-        <span style="font-size:11px;color:var(--text3);margin-left:4px">仅基于PRD + 人工补充</span>
-        <button id="btn-select-a" onclick="selectMindVersion('a')" style="margin-left:auto;font-size:11px;padding:3px 10px;background:var(--teal-bg);color:var(--teal-t);border-color:var(--teal-bd)">使用此版本</button>
+        <button id="btn-select-a" onclick="selectMindVersion('a')" style="margin-left:auto;font-size:11px;padding:3px 8px;background:var(--teal-bg);color:var(--teal-t);border-color:var(--teal-bd)">选择</button>
       </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">仅基于PRD + 人工补充</div>
       <div class="mwrap" id="mind-svg-wrap-a"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">生成中...</div></div>
       <div class="br" style="margin-top:4px">
-        <button onclick="exportXmindVersion('a')">导出 .xmind ↓</button>
+        <button onclick="exportXmindVersion('a')" style="font-size:11px">导出 .xmind</button>
       </div>
-      <div class="ph" style="margin-top:6px"><div class="dot" style="background:#639922"></div>版本A 评审意见</div>
-      <textarea id="mind-review-a" placeholder="版本A的AI评审意见..." readonly style="min-height:100px;resize:vertical"></textarea>
+      <div class="ph" style="margin-top:6px;font-size:11px"><div class="dot" style="background:#639922"></div>评审意见</div>
+      <textarea id="mind-review-a" placeholder="版本A评审意见..." readonly style="min-height:80px;font-size:11px;resize:vertical"></textarea>
       <div class="scrow" id="mind-scores-a"></div>
     </div>
     <!-- 版本B：增强版 -->
@@ -303,16 +304,30 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <div class="ph">
         <div class="dot" style="background:#534AB7"></div>
         版本B — 增强版
-        <span style="font-size:11px;color:var(--text3);margin-left:4px">PRD + 补充 + AI评审意见</span>
-        <button id="btn-select-b" onclick="selectMindVersion('b')" style="margin-left:auto;font-size:11px;padding:3px 10px;background:var(--purple-bg);color:var(--purple-t);border-color:var(--purple-bd)">使用此版本</button>
+        <button id="btn-select-b" onclick="selectMindVersion('b')" style="margin-left:auto;font-size:11px;padding:3px 8px;background:var(--purple-bg);color:var(--purple-t);border-color:var(--purple-bd)">选择</button>
       </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">PRD + 补充 + AI评审意见</div>
       <div class="mwrap" id="mind-svg-wrap-b"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">生成中...</div></div>
       <div class="br" style="margin-top:4px">
-        <button onclick="exportXmindVersion('b')">导出 .xmind ↓</button>
+        <button onclick="exportXmindVersion('b')" style="font-size:11px">导出 .xmind</button>
       </div>
-      <div class="ph" style="margin-top:6px"><div class="dot" style="background:#639922"></div>版本B 评审意见</div>
-      <textarea id="mind-review-b" placeholder="版本B的AI评审意见..." readonly style="min-height:100px;resize:vertical"></textarea>
+      <div class="ph" style="margin-top:6px;font-size:11px"><div class="dot" style="background:#639922"></div>评审意见</div>
+      <textarea id="mind-review-b" placeholder="版本B评审意见..." readonly style="min-height:80px;font-size:11px;resize:vertical"></textarea>
       <div class="scrow" id="mind-scores-b"></div>
+    </div>
+    <!-- 人工版本 -->
+    <div class="panel" id="mind-panel-manual" style="border:0.5px solid var(--border);display:none">
+      <div class="ph">
+        <div class="dot" style="background:#EF9F27"></div>
+        人工版本
+        <button onclick="selectMindVersion('manual')" style="margin-left:auto;font-size:11px;padding:3px 8px;background:var(--amber-bg);color:var(--amber-t);border-color:var(--amber-bd)">选择</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">已上传的 XMind 文件</div>
+      <div class="mwrap" id="mind-svg-wrap-manual"><div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">上传XMind后显示</div></div>
+      <div class="br" style="margin-top:4px">
+        <button onclick="exportXmindVersion('manual')" style="font-size:11px">导出 .xmind</button>
+        <button onclick="clearManualXmind()" style="font-size:11px;color:#A32D2D">清除</button>
+      </div>
     </div>
   </div>
 
@@ -327,6 +342,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <div class="br">
         <button class="btnp" id="btn-to-node4-direct" disabled onclick="skipToNode4()">直接生成用例 ↗</button>
         <button id="btn-to-node3" disabled onclick="jumpNode(3)" style="font-size:11px;opacity:.8">需要AI补充遗漏？进入节点3 →</button>
+        <button onclick="resetXmindUpload()" style="font-size:11px;opacity:.8">重置，使用AI生成版本</button>
       </div>
     </div>
   </div>
@@ -1363,21 +1379,13 @@ async function handleXmind(input){
     area.textContent="已载入 XMind："+f.name+" ("+childEls.length+" 个一级节点)";
     // 人工XMind视为已修正版本，ST.mindFixed = ST.mindData
     ST.mindFixed = json;
-    ST.mindDataA = json;
-    ST.mindDataB = null;
-    // 隐藏版本选择，显示人工版本提示
-    const panelA=document.getElementById("mind-panel-a");
-    const panelB=document.getElementById("mind-panel-b");
-    if(panelA) panelA.style.display="none";
-    if(panelB) panelB.style.display="none";
-    const tip=document.getElementById("mind-version-tip");
-    const name=document.getElementById("mind-version-selected");
-    if(tip) tip.style.display="block";
-    if(name) name.textContent="人工修改版本（已上传XMind）";
-    renderMindMap("mind-svg-wrap-a",json);
+    // 显示人工版本面板
+    const manualPanel=document.getElementById("mind-panel-manual");
+    if(manualPanel) manualPanel.style.display="";
+    renderMindMap("mind-svg-wrap-manual",json);
     document.getElementById("btn-to-node4-direct").disabled=false;
     document.getElementById("btn-to-node3").disabled=false;
-    setStatus("XMind 已载入 ✓ 可直接生成用例，或进入节点3补充遗漏测试点");
+    setStatus("XMind 已载入 ✓ 可对比三个版本后选择继续");
   }catch(e){
     area.classList.remove("ok");
     area.textContent="解析失败："+e.message;
@@ -1421,28 +1429,51 @@ async function callAI(system,user){
   }
 }
 function selectMindVersion(ver){
-  const data=ver==="a"?ST.mindDataA:ST.mindDataB;
-  if(!data) return;
+  let data=null;
+  if(ver==="a") data=ST.mindDataA;
+  else if(ver==="b") data=ST.mindDataB;
+  else if(ver==="manual") data=ST.mindFixed;
+  if(!data){setStatus("该版本暂无数据");return;}
   ST.mindData=data;
-  ST.mindFixed=null; // 清空之前的修正版本
+  if(ver!=="manual") ST.mindFixed=null; // 只有选人工版本才保留mindFixed
   // 高亮选中版本
-  const panelA=document.getElementById("mind-panel-a");
-  const panelB=document.getElementById("mind-panel-b");
-  const teal="0.5px solid var(--teal-bd)";
-  const purple="0.5px solid var(--purple-bd)";
-  const normal="0.5px solid var(--border)";
-  panelA.style.border=ver==="a"?teal:normal;
-  panelB.style.border=ver==="b"?purple:normal;
+  const panels={a:"mind-panel-a",b:"mind-panel-b",manual:"mind-panel-manual"};
+  const borders={a:"0.5px solid var(--teal-bd)",b:"0.5px solid var(--purple-bd)",manual:"0.5px solid var(--amber-bd)"};
+  Object.keys(panels).forEach(v=>{
+    const el=document.getElementById(panels[v]);
+    if(el) el.style.border=v===ver?borders[v]:"0.5px solid var(--border)";
+  });
+  // 开放继续按钮
+  document.getElementById("btn-to-node4-direct").disabled=false;
+  document.getElementById("btn-to-node3").disabled=false;
   // 显示提示
   const tip=document.getElementById("mind-version-tip");
   const name=document.getElementById("mind-version-selected");
-  tip.style.display="block";
-  name.textContent=ver==="a"?"版本A（纯净版）":"版本B（增强版）";
-  setStatus(`已选择${ver==="a"?"版本A（纯净版）":"版本B（增强版）"}，可进入节点3修正或直接生成用例`);
+  if(tip) tip.style.display="block";
+  const labels={a:"版本A（纯净版）",b:"版本B（增强版）",manual:"人工版本"};
+  if(name) name.textContent=labels[ver]||ver;
+  setStatus(`已选择${labels[ver]}，可进入节点3补充或直接生成用例`);
+}
+
+function clearManualXmind(){
+  ST.mindFixed=null;
+  const manualPanel=document.getElementById("mind-panel-manual");
+  if(manualPanel) manualPanel.style.display="none";
+  const area=document.getElementById("xmind-upload-area");
+  if(area){area.classList.remove("ok");area.textContent="如需人工调整导图，上传修改后的 .xmind 文件\n不上传则直接使用 AI 生成版本";}
+  document.getElementById("xmind-input").value="";
+  // 如果当前选的是人工版本，清除选择
+  const name=document.getElementById("mind-version-selected");
+  if(name&&name.textContent==="人工版本"){
+    document.getElementById("mind-version-tip").style.display="none";
+    document.getElementById("btn-to-node4-direct").disabled=true;
+    document.getElementById("btn-to-node3").disabled=true;
+  }
+  setStatus("已清除人工XMind");
 }
 
 function exportXmindVersion(ver){
-  const data=ver==="a"?ST.mindDataA:ST.mindDataB;
+  const data=ver==="a"?ST.mindDataA:ver==="b"?ST.mindDataB:ST.mindFixed;
   if(!data){setStatus("暂无导图可导出");return;}
   const origData=ST.mindData;
   ST.mindData=data;
@@ -1454,6 +1485,8 @@ function exportXmindVersion(ver){
 function getMindSvgWrap(){
   return document.getElementById("mind-svg-wrap")||document.getElementById("mind-svg-wrap-a");
 }
+
+function resetXmindUpload(){ clearManualXmind(); }
 
 function skipToNode4(){
   // 人工XMind或AI导图直接跳节点4，mindFixed=mindData
@@ -1616,17 +1649,19 @@ function clearAll(){
    "cases-output","cases-review","cases-issues","cases-before","cases-after","cases-fix-notes"]
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   ["prd-scores","mind-scores","cases-scores"].forEach(id=>document.getElementById(id).innerHTML="");
-  ["mind-svg-wrap-a","mind-svg-wrap-b","mind-before-wrap","mind-after-wrap"].forEach(id=>{
+  ["mind-svg-wrap-a","mind-svg-wrap-b","mind-svg-wrap-manual","mind-before-wrap","mind-after-wrap"].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:20px;text-align:center">—</div>`;
   });
   ST.mindDataA=null; ST.mindDataB=null;
   const tip=document.getElementById("mind-version-tip");
   if(tip) tip.style.display="none";
-  const pA=document.getElementById("mind-panel-a");
-  const pB=document.getElementById("mind-panel-b");
-  if(pA) pA.style.border="0.5px solid var(--border)";
-  if(pB) pB.style.border="0.5px solid var(--border)";
+  ["mind-panel-a","mind-panel-b"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.border="0.5px solid var(--border)";
+  });
+  const mp=document.getElementById("mind-panel-manual");
+  if(mp) mp.style.display="none";
   ["btn-to-node2","btn-to-node3","btn-to-node4","btn-to-node5","btn-to-node6"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.disabled=true;
   });
