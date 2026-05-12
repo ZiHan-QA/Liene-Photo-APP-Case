@@ -1772,10 +1772,21 @@ async function runMindGen(){
   ✗ 错误：验证跳转正确  
   ✓ 正确：点击打印入口跳转打印编辑页 / 点击拼图入口跳转拼图编辑页
 - PRD中每个功能点、按钮、状态都应单独列出
-- 不按测试维度（功能测试/边界测试）分类，直接按功能场景展开`,combined);
+- 严禁将「边界测试」「异常测试」「性能测试」「兼容性测试」作为一级节点单独列出
+- 边界条件、异常场景、网络状态等必须作为对应功能节点的子节点展开
+  ✗ 错误结构：
+    └── 打印入口
+    └── 边界测试（单独一级）
+          └── 无网络
+  ✓ 正确结构：
+    └── 打印入口
+          └── 有网络状态 → 正常跳转打印编辑页
+          └── 无网络状态 → 展示网络异常Toast
+          └── 离线状态 → 展示设备离线提示
+- 不按测试维度分类，直接按功能场景展开，边界和异常内嵌在对应功能下`,combined);
     let json;
     try{json=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}
-    catch(e){json={root:"功能测试",children:[{name:"功能测试",children:[{name:"基础流程",children:[]}]},{name:"边界测试",children:[{name:"边界值",children:[]}]},{name:"异常测试",children:[{name:"异常场景",children:[]}]}]};}
+    catch(e){json={root:"功能测试",children:[{name:"基础流程",children:[{name:"正常场景",children:[]},{name:"异常场景",children:[]},{name:"边界条件",children:[]}]}]};}
     ST.mindData=json;
     ST.mindDataA=json;
     renderMindMap("mind-svg-wrap-a",json);
