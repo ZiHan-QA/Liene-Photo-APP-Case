@@ -222,7 +222,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <span class="chip" onclick="useSamplePrd()">载入示例PRD</span>
     <span class="chip" onclick="clearAll()">重置全部</span>
     <span class="chip" onclick="showKbPanel()">知识库历史</span>
-    <span class="chip" onclick="showRelatedPanel()">选择关联模块</span>
+    <span class="chip" id="btn-related-chip" onclick="showRelatedPanel()" style="display:none">选择关联模块</span>
   </div>
   <!-- 关联模块选择面板 -->
   <div id="related-panel" style="display:none;margin-bottom:12px">
@@ -767,6 +767,8 @@ async function loadKnowledge(){
         setStatus("知识库索引格式有误，已重置："+e.message);
       }
       renderKbList();
+      const relBtn=document.getElementById("btn-related-chip");
+      if(relBtn) relBtn.style.display=ST.kb.length>0?"":"none";
       setStatus(`知识库加载完成，共 ${ST.kb.length} 个模块`);
     } else {
       ST.kb=[];
@@ -1388,8 +1390,9 @@ async function callAI(system,user){
     mid=getModelId();const cfg=getModelCfg();apiUrl=cfg.url;provider=cfg.provider;
   }
   // 拼入知识库上下文
-  const kbCtx=buildKbContext();
-  const fullSystem=kbCtx?system+"\n\n【历史知识库上下文】\n"+kbCtx:system;
+  // buildKbContext不传phase时只返回模块列表摘要，不带详细上下文
+  const kbCtx=ST.kb&&ST.kb.length>0?"已评审功能模块："+ST.kb.map(m=>m.name+"（"+m.caseCount+"条）").join("；"):"";
+  const fullSystem=kbCtx?system+"\n\n【知识库摘要】\n"+kbCtx:system;
   if(provider==="claude"){
     const r=await fetch(apiUrl,{method:"POST",
       headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},
@@ -1722,7 +1725,7 @@ async function runNode1(){
 - 若有问题需澄清：输出「⚠️ 需澄清以下问题后再写用例：[问题1] [问题2]...」
 
 评分标签（单独一行）：[验收标准:高/中/低] [逻辑完整性:高/中/低] [边界覆盖:高/中/低]
-中文，简明扼要，重点突出测试关注点`,"PRD内容：\n\n"+prd);
+中文，简明扼要，重点突出测试关注点`,"PRD内容：\n\n"+prd+(kbCtx1?"\n\n【关联模块历史问题参考】\n"+kbCtx1:""));
     ST.prdReview=res;ST.prdText=prd;
     // 提取结论行和评分行，其余为正文
     const lines=res.split("\n");
@@ -1733,8 +1736,7 @@ async function runNode1(){
     document.getElementById("btn-to-node2").disabled=false;
     const tip=conclusionLine.includes("✅")?"PRD评审完成 ✅ 可以开始写用例":"PRD评审完成 ⚠️ 建议人工补齐后再继续";
     setStatus(tip);
-  }catch(e){setStatus("出错："+e.message);}
-  busy=false;
+  }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
 function goToNode2(){ST.prdSupplement=document.getElementById("prd-supplement").value;jumpNode(2);runMindGen();}
 async function runMindGen(){
@@ -1781,11 +1783,13 @@ async function runMindGen(){
     setStatus("生成AI评审意见...",true);
     await runMindReview(json);
     setStatus("生成版本B（增强版）...",true);
-    const resB=await callAI(`你是Liene/极印Photo APP的QA测试架构师。根据PRD和AI评审意见生成详细测试思维导图JSON。
+    let jsonB=json; // 默认降级为版本A
+    try{
+      const resB=await callAI(`你是Liene/极印Photo APP的QA测试架构师。根据PRD和AI评审意见生成详细测试思维导图JSON。
 只输出JSON，不要任何说明文字或markdown代码块。
 格式与输入相同：{"root":"功能名称","children":[...]}
 在版本A基础上，重点补充评审意见中提到的遗漏测试点和边界场景。`,
-      `PRD内容：
+        `PRD内容：
 ${combined}
 
 版本A导图：
@@ -1793,8 +1797,11 @@ ${JSON.stringify(json,null,2)}
 
 评审发现的遗漏：
 ${ST.mindReview}`);
-    let jsonB;
-    try{jsonB=JSON.parse(resB.replace(/\`\`\`json|\`\`\`/g,"").trim());}catch(e){jsonB=json;}
+      try{jsonB=JSON.parse(resB.replace(/\`\`\`json|\`\`\`/g,"").trim());}catch(e){jsonB=json;}
+    }catch(e){
+      setStatus("版本B生成失败，已降级为版本A："+e.message);
+      jsonB=json;
+    }
     ST.mindDataB=jsonB;
     renderMindMap("mind-svg-wrap-b",jsonB);
     // 默认选版本A
@@ -1802,8 +1809,7 @@ ${ST.mindReview}`);
     document.getElementById("btn-to-node4-direct").disabled=false;
     document.getElementById("mind-version-tip").style.display="none";
     setStatus("两个版本生成完成，请选择使用哪个版本继续 ↑");
-  }catch(e){setStatus("出错："+e.message);}
-  busy=false;
+  }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
 async function runMindReview(json){
   const res=await callAI(`你是测试覆盖度评审专家。评审测试思维导图：
@@ -1832,8 +1838,7 @@ async function runNode3(){
     document.getElementById("mind-fix-notes").value=notes;
     document.getElementById("btn-to-node4").disabled=false;
     setStatus("节点3完成，可导出修正版XMind或进入节点4");
-  }catch(e){setStatus("出错："+e.message);}
-  busy=false;
+  }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
 async function runNode4(){
   if(!ST.mindFixed&&!ST.mindData){setStatus("请先完成节点3");return;}
@@ -1885,35 +1890,48 @@ async function runNode4(){
     ).join("\n");
     document.getElementById("btn-to-node5").disabled=false;
     setStatus("节点4完成，生成"+cases.length+"条用例，可进入节点5评审");
-  }catch(e){setStatus("出错："+e.message);}
-  busy=false;
+  }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
 async function runNode5(){
   if(!ST.cases){setStatus("请先完成节点4");return;}
   if(busy)return;busy=true;
   setStatus(getModelCfg().label+" 评审测试用例...",true);
   try{
-    const [review,issues]=await Promise.all([
-      callAI(`资深QA评审专家。评审维度：1.覆盖完整性 2.步骤清晰度 3.预期结果准确性 4.边界场景 5.可执行性 6.关联模块交叉场景覆盖
+    const casesStr=Array.isArray(ST.cases)?JSON.stringify(ST.cases):ST.cases;
+    const kbCtx5=buildKbContext("review_cases");
+    let review="",issues="";
+    try{
+      [review,issues]=await Promise.all([
+        callAI(`资深QA评审专家。评审维度：1.覆盖完整性 2.步骤清晰度 3.预期结果准确性 4.边界场景 5.可执行性 6.关联模块交叉场景覆盖
 最后一行：[覆盖度:高/中/低] [清晰度:高/中/低] [可执行性:高/中/低]
-中文简洁`,"测试用例：\n\n"+JSON.stringify(ST.cases)+(buildKbContext("review_cases")?"\n\n"+buildKbContext("review_cases"):"")),
-      callAI(`找出测试用例具体问题，格式：问题N：[用例标题] - [问题描述] - [修改建议]
-无问题则输出"用例质量良好"。中文。`,"测试用例：\n\n"+JSON.stringify(ST.cases))
-    ]);
+中文简洁`,"测试用例：\n\n"+casesStr+(kbCtx5?"\n\n"+kbCtx5:"")),
+        callAI(`找出测试用例具体问题，格式：问题N：[用例标题] - [问题描述] - [修改建议]
+无问题则输出"用例质量良好"。中文。`,"测试用例：\n\n"+casesStr)
+      ]);
+    }catch(e){
+      // 单个失败时尝试串行
+      review=await callAI(`资深QA评审专家。评审维度：1.覆盖完整性 2.步骤清晰度 3.预期结果准确性 4.边界场景 5.可执行性
+最后一行：[覆盖度:高/中/低] [清晰度:高/中/低] [可执行性:高/中/低]
+中文简洁`,"测试用例：\n\n"+casesStr);
+      issues=await callAI(`找出测试用例具体问题，格式：问题N：[用例标题] - [问题描述] - [修改建议]
+无问题则输出"用例质量良好"。中文。`,"测试用例：\n\n"+casesStr);
+    }
     ST.casesReview=review;
     document.getElementById("cases-review").value=review.replace(/\[[^\]]+\][\s\S]*$/m,"").trim();
     document.getElementById("cases-issues").value=issues;
     renderScores("cases-scores",review);
     document.getElementById("btn-to-node6").disabled=false;
     setStatus("节点5完成，可进入节点6修正");
-  }catch(e){setStatus("出错："+e.message);}
-  busy=false;
+  }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
 async function runNode6(){
   if(!ST.cases){setStatus("请先完成节点5");return;}
   if(busy)return;busy=true;
   setStatus(getModelCfg().label+" 自动修正用例...",true);
-  document.getElementById("cases-before").value=ST.cases;
+  const casesArr0=Array.isArray(ST.cases)?ST.cases:[];
+  document.getElementById("cases-before").value=casesArr0.length>0
+    ?casesArr0.map((c,i)=>`【${i+1}】${c.title||""}\n步骤：\n${c.steps||""}\n预期结果：\n${c.expected||""}\n${"─".repeat(40)}`).join("\n")
+    :String(ST.cases||"");
   try{
     const issues=document.getElementById("cases-issues").value;
     const [fixed,notes]=await Promise.all([
@@ -1936,8 +1954,7 @@ async function runNode6(){
     // 迭代diff
     await computeIterationDiff(fixedCases);
     setStatus("全流程完成！共"+fixedCases.length+"条用例，记得导出Excel并保存到知识库 ✓");
-  }catch(e){setStatus("出错："+e.message);}
-  busy=false;
+  }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
 
 /* ── 思维导图渲染 ── */
