@@ -2029,16 +2029,33 @@ async function runNode3(){
     setStatus("节点3完成，可导出修正版XMind或进入节点4");
   }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
 }
+// 分批生成用例的辅助函数
+function splitMindByBranch(mind){
+  // 按一级节点分组，每组是一个子树
+  const branches=mind.children||[];
+  if(branches.length===0) return [mind];
+  // 每批最多3个一级节点
+  const BATCH=3;
+  const groups=[];
+  for(let i=0;i<branches.length;i+=BATCH){
+    groups.push({root:mind.root,children:branches.slice(i,i+BATCH)});
+  }
+  return groups;
+}
+
 async function runNode4(){
   if(!ST.mindFixed&&!ST.mindData){setStatus("请先完成节点3");return;}
   if(busy)return;busy=true;
   setStatus(getModelCfg().label+" 生成测试用例...",true);
   try{
     const mind=normalizeMindData(ST.mindFixed||ST.mindData);
-    const platform=document.getElementById("module-platform")?.value||"app";
-    const moduleName=document.getElementById("module-name")?.value||"";
-    const modulePath=buildModulePath(platform,moduleName);
-    const res=await callAI(`你是Liene/极印 Photo APP的QA测试工程师。根据测试思维导图生成完整结构化测试用例。
+    const kbCtx=buildKbContext("cases");
+    const branches=mind.children||[];
+    const BATCH=3;
+    const totalBatches=Math.ceil(branches.length/BATCH);
+    let allCases=[];
+
+    const casePrompt=`你是Liene/极印 Photo APP的QA测试工程师。根据测试思维导图生成完整结构化测试用例。
 严格按以下JSON数组格式输出，不要任何说明文字或markdown代码块：
 [
   {
@@ -2053,33 +2070,61 @@ async function runNode4(){
 ]
 要求：
 - 标题命名规范（非常重要）：
-  · 所有机器行为完全一致 → 标题前加【通用】，如：【通用】网络异常Toast展示
-  · 仅特定机器 → 标题前加机器名，如：【Kiwi】海外版首页功能入口
-  · 多台但非全部 → 标题前加多个机器名，如：【Kiwi/Fennel】无切换icon验证
-  · 机器名从PRD中自动识别，不局限于现有机器，新增机器直接用其代号
+  · 所有机器行为完全一致 → 标题前加【通用】
+  · 仅特定机器 → 标题前加机器名，如：【Kiwi】
+  · 多台但非全部 → 如：【Kiwi/Fennel】
+  · 机器名从PRD中自动识别，不局限于现有机器
 - steps和expected步骤数量严格一一对应
-- precondition填写该用例执行前需满足的条件，无则填空字符串
+- precondition填写前置条件，无则填空字符串
 - importance：核心流程=高，常规功能=中，边缘场景=低
 - type：功能测试/边界测试/异常测试/兼容性测试/性能测试
 - test_type：手工测试/自动化测试
-- 至少生成12条，覆盖正常/边界/异常流程
-- 中文输出`,
-      "思维导图：\n"+JSON.stringify(mind,null,2)+
-      (buildKbContext("cases")?"\n\n"+buildKbContext("cases"):""));
-    let cases=[];
-    try{cases=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}
-    catch(e){
-      // 解析失败时保留原始文本
-      cases=[{title:"解析失败，原始内容见下",steps:res,expected:"",importance:"中",type:"功能测试"}];
+- 每个叶子节点至少生成1条用例，不要遗漏
+- 中文输出`;
+
+    if(totalBatches<=1){
+      // 节点少，直接生成
+      const res=await callAI(casePrompt,
+        "思维导图：\n"+JSON.stringify(mind,null,2)+(kbCtx?"\n\n"+kbCtx:""));
+      allCases=parseJsonCases(res);
+    } else {
+      // 分批生成
+      for(let i=0;i<branches.length;i+=BATCH){
+        const batch={root:mind.root,children:branches.slice(i,i+BATCH)};
+        setStatus(`生成用例中... 第${Math.floor(i/BATCH)+1}/${totalBatches}批`,true);
+        const res=await callAI(casePrompt,
+          "思维导图（第"+(Math.floor(i/BATCH)+1)+"/"+ totalBatches+"批）：\n"+JSON.stringify(batch,null,2)+(kbCtx?"\n\n"+kbCtx:""));
+        const batchCases=parseJsonCases(res);
+        allCases=allCases.concat(batchCases);
+        // 实时更新显示
+        document.getElementById("cases-output").value=allCases.map((c,idx)=>
+          `【${idx+1}】${c.title}\n步骤：\n${c.steps}\n预期结果：\n${c.expected}\n重要程度：${c.importance} | 类型：${c.type}\n${"─".repeat(40)}`
+        ).join("\n");
+      }
     }
-    ST.cases=cases;
-    // 渲染为可读文本展示
-    document.getElementById("cases-output").value=cases.map((c,i)=>
+
+    ST.cases=allCases;
+    ST.casesFinal=allCases;
+    // 渲染文本预览
+    document.getElementById("cases-output").value=allCases.map((c,i)=>
       `【${i+1}】${c.title}\n步骤：\n${c.steps}\n预期结果：\n${c.expected}\n重要程度：${c.importance} | 类型：${c.type}\n${"─".repeat(40)}`
     ).join("\n");
     document.getElementById("btn-to-node5").disabled=false;
-    setStatus("节点4完成，生成"+cases.length+"条用例，可进入节点5评审");
+    setStatus("节点4完成，共生成"+allCases.length+"条用例，可导出Excel或进入节点5评审 ✓");
   }catch(e){setStatus("出错："+e.message);}finally{busy=false;}
+}
+
+function parseJsonCases(res){
+  try{
+    let cleaned=res.replace(/```json|```/g,"").trim();
+    const start=cleaned.indexOf("[");
+    const end=cleaned.lastIndexOf("]");
+    if(start>=0&&end>start) cleaned=cleaned.slice(start,end+1);
+    const parsed=JSON.parse(cleaned);
+    return Array.isArray(parsed)?parsed:[parsed];
+  }catch(e){
+    return [{title:"解析失败，原始内容见下",steps:res,expected:"",importance:"中",type:"功能测试"}];
+  }
 }
 async function runNode5(){
   if(!ST.cases){setStatus("请先完成节点4");return;}
@@ -2132,8 +2177,14 @@ async function runNode6(){
       callAI("说明对测试用例做了哪些修正（3-5条，格式：修正N：xxx，中文）",`问题清单：${issues}`)
     ]);
     let fixedCases=[];
-    try{fixedCases=JSON.parse(fixed.replace(/\`\`\`json|\`\`\`/g,"").trim());}
-    catch(e){fixedCases=ST.cases||[];}
+    try{
+      let cleaned6=fixed.replace(/```json|```/g,"").trim();
+      const start6=cleaned6.indexOf("[");
+      const end6=cleaned6.lastIndexOf("]");
+      if(start6>=0&&end6>start6) cleaned6=cleaned6.slice(start6,end6+1);
+      fixedCases=JSON.parse(cleaned6);
+      if(!Array.isArray(fixedCases)) fixedCases=[fixedCases];
+    }catch(e){fixedCases=Array.isArray(ST.cases)?ST.cases:[];}
     ST.casesFinal=fixedCases;
     document.getElementById("cases-after").value=fixedCases.map((c,i)=>
       `【${i+1}】${c.title}\n步骤：\n${c.steps}\n预期结果：\n${c.expected}\n重要程度：${c.importance} | 类型：${c.type}\n${"─".repeat(40)}`
