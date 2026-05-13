@@ -336,6 +336,17 @@ button:disabled{opacity:.4;cursor:not-allowed}
   </div>
 
   <div class="pa">
+    <!-- 合并版本B + 人工版本 -->
+    <div id="merge-panel" style="display:none;margin-bottom:12px">
+      <div class="panel full" style="border:0.5px solid var(--coral-bd)">
+        <div class="ph">
+          <div class="dot" style="background:var(--coral-bd)"></div>
+          合并版本 — 版本B + 人工版本
+          <span style="font-size:11px;color:var(--coral-t);margin-left:4px">以人工为主，补充版本B中遗漏的测试点</span>
+          <button onclick="runMergeVersions()" class="btnp" style="margin-left:auto;font-size:11px;padding:4px 12px">生成合并版本 ↗</button>
+        </div>
+      </div>
+    </div>
     <div class="panel full">
       <div class="ph"><div class="dot" style="background:#EF9F27"></div>上传人工修改的 XMind 文件 <span class="hbadge">可选·人工节点</span></div>
       <div class="uparea" id="xmind-upload-area" onclick="document.getElementById('xmind-input').click()">
@@ -1472,7 +1483,8 @@ async function handleXmind(input){
     document.getElementById("btn-to-node3").disabled=false;
     // 如果版本B也存在，显示合并面板
     if(ST.mindDataB){
-      document.getElementById("merge-panel").style.display="block";
+      const mp=document.getElementById("merge-panel");
+      if(mp) mp.style.display="block";
     }
     setStatus("XMind 已载入 ✓ 可对比三个版本后选择，或生成合并版本");
   }catch(e){
@@ -1720,8 +1732,8 @@ function renderRelatedTree(tree, platform, pc, depth, pathPrefix){
     const hasChildren=Object.keys(node._children).length>0;
     const hasModules=node._modules.length>0;
     const fullPath=pathPrefix?pathPrefix+"/"+key:key;
-    // 用计数器保证ID唯一，不依赖路径
-    const nodeId="rn-"+Math.random().toString(36).slice(2,10);
+    // 用平台+路径生成稳定唯一ID
+    const nodeId="rn-"+btoa(unescape(encodeURIComponent(platform+"|"+fullPath+"|"+depth))).replace(/[^a-zA-Z0-9]/g,"").slice(0,16);
 
     if(hasChildren){
       // 目录节点，可折叠
@@ -2144,7 +2156,8 @@ ${ST.mindReview}`);
     await runMindReview(jsonB,"b");
     // 如果人工版本也存在，显示合并面板
     if(ST.mindFixed){
-      document.getElementById("merge-panel").style.display="block";
+      const mp3=document.getElementById("merge-panel");
+      if(mp3) mp3.style.display="block";
     }
     // 不默认选版本，需用户手动选择
     document.getElementById("btn-to-node3").disabled=false;
