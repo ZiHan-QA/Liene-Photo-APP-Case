@@ -1305,44 +1305,61 @@ function loadScript(src){
 
 /* ── XMind 导出 ── */
 async function exportXmind(type){
-  const data=type==="fixed"?(ST.mindFixed||ST.mindData):ST.mindData;
+  let data=type==="fixed"?(ST.mindFixed||ST.mindData):ST.mindData;
   if(!data){setStatus("暂无导图可导出");return;}
+  // 统一格式
+  data=normalizeMindData(data);
   try{
     const zip=new JSZip();
-    const rootId="root-"+Date.now();
-    function buildXmlNode(node,id){
-      const cid=id||"n-"+Math.random().toString(36).slice(2,10);
-      let xml=`<topic id="${cid}"><title>${escXml(node.name||node.root||"")}</title>`;
+    function buildJsonNode(node){
+      const id="node-"+Math.random().toString(36).slice(2,12);
+      const title=String(node.name||node.root||"");
       const children=node.children||[];
-      if(children.length){
-        xml+=`<children><topics type="attached">`;
-        children.forEach((c,i)=>{ xml+=buildXmlNode(c,"n-"+cid+"-"+i); });
-        xml+=`</topics></children>`;
-      }
-      xml+=`</topic>`;
-      return xml;
+      return {
+        id,
+        class:"topic",
+        title,
+        children:{attached:children.map(c=>buildJsonNode(c))}
+      };
     }
-    function escXml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-    const rootTitle=data.root||"测试导图";
-    let topicsXml="";
-    (data.children||[]).forEach((c,i)=>{ topicsXml+=buildXmlNode(c,"n-root-"+i); });
-    const contentXml=`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" version="2.0">
-<sheet id="sheet-1" timestamp="${Date.now()}">
-<topic id="${rootId}">
-<title>${escXml(rootTitle)}</title>
-<children><topics type="attached">${topicsXml}</topics></children>
-</topic>
-<title>${escXml(rootTitle)}</title>
-</sheet>
-</xmap-content>`;
-    zip.file("content.xml",contentXml);
-    zip.file("meta.xml",`<?xml version="1.0" encoding="UTF-8"?><meta xmlns="urn:xmind:xmap:xmlns:meta:2.0" version="2.0"/>`);
-    zip.file("META-INF/manifest.xml",`<?xml version="1.0" encoding="UTF-8"?><manifest xmlns="urn:xmind:xmap:xmlns:manifest:1.0"><file-entry full-path="content.xml" media-type="text/xml"/></manifest>`);
+    const rootTitle=String(data.root||"测试导图");
+    // 根节点单独构建，加structureClass
+    const rootNode={
+      id:"node-root-"+Date.now(),
+      class:"topic",
+      title:rootTitle,
+      structureClass:"org.xmind.ui.logic.right",
+      children:{attached:(data.children||[]).map(c=>buildJsonNode(c))}
+    };
+    const sheetId="sheet-"+Date.now();
+    const contentJson=[{
+      id:sheetId,
+      class:"sheet",
+      title:rootTitle,
+      rootTopic:rootNode,
+      extensions:[]
+    }];
+    zip.file("content.json", JSON.stringify(contentJson));
+    // metadata.json
+    const metadata={
+      creator:{name:"Liene QA Pipeline",version:"1.0"},
+      created:new Date().toISOString(),
+      modifier:{name:"Liene QA Pipeline"},
+      modified:new Date().toISOString()
+    };
+    zip.file("metadata.json", JSON.stringify(metadata));
+    // manifest.json
+    const manifest={
+      "file-entries":{
+        "content.json":{"media-type":"application/json"},
+        "metadata.json":{"media-type":"application/json"}
+      }
+    };
+    zip.file("manifest.json", JSON.stringify(manifest));
     const blob=await zip.generateAsync({type:"blob"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
-    a.download=(data.root||"测试导图")+(type==="fixed"?"_修正版":"")+".xmind";
+    a.download=(rootTitle)+(type==="fixed"?"_修正版":"")+".xmind";
     a.click();
     setStatus("XMind 文件已导出");
   }catch(e){setStatus("导出失败："+e.message);}
@@ -1356,36 +1373,60 @@ async function handleXmind(input){
   area.textContent="解析中："+f.name;
   try{
     const zip=await JSZip.loadAsync(await f.arrayBuffer());
-    const xmlFile=zip.file("content.xml");
-    if(!xmlFile) throw new Error("找不到 content.xml");
-    const xml=await xmlFile.async("string");
-    const parser=new DOMParser();
-    const doc=parser.parseFromString(xml,"text/xml");
-    function parseNode(el){
-      const title=el.querySelector(":scope > title")?.textContent||"";
-      const childEls=[...el.querySelectorAll(":scope > children > topics > topic")];
-      const node={name:title};
-      if(childEls.length) node.children=childEls.map(parseNode);
-      else node.children=[];
-      return node;
+    let json=null;
+
+    // 优先尝试新版格式 content.json
+    const jsonFile=zip.file("content.json");
+    if(jsonFile){
+      const jsonStr=await jsonFile.async("string");
+      try{
+        const sheets=JSON.parse(jsonStr);
+        const sheet=Array.isArray(sheets)?sheets[0]:sheets;
+        const rootTopic=sheet.rootTopic||sheet;
+        function parseJsonNode(node){
+          const children=(node.children?.attached||node.children||[]).map(parseJsonNode);
+          return {name:node.title||"",children};
+        }
+        json={root:rootTopic.title||sheet.title||"导图",children:(rootTopic.children?.attached||[]).map(parseJsonNode)};
+      }catch(e){json=null;}
     }
-    const rootEl=doc.querySelector("sheet > topic");
-    if(!rootEl) throw new Error("导图结构无法解析");
-    const rootTitle=rootEl.querySelector(":scope > title")?.textContent||"导图";
-    const childEls=[...rootEl.querySelectorAll(":scope > children > topics > topic")];
-    const json={root:rootTitle,children:childEls.map(parseNode)};
-    ST.mindData=json;
-    renderMindMap("mind-svg-wrap-a",json);
-    area.textContent="已载入 XMind："+f.name+" ("+childEls.length+" 个一级节点)";
-    // 人工XMind视为已修正版本，ST.mindFixed = ST.mindData
-    ST.mindFixed = json;
-    // 显示人工版本面板
+
+    // 降级尝试旧版格式 content.xml
+    if(!json){
+      const xmlFile=zip.file("content.xml");
+      if(!xmlFile) throw new Error("找不到 content.xml 或 content.json");
+      const xml=await xmlFile.async("string");
+      const parser=new DOMParser();
+      const doc=parser.parseFromString(xml,"text/xml");
+      function parseNode(el){
+        const title=el.querySelector(":scope > title")?.textContent||"";
+        const childEls=[...el.querySelectorAll(":scope > children > topics > topic")];
+        return {name:title,children:childEls.map(parseNode)};
+      }
+      const rootEl=doc.querySelector("sheet > topic");
+      if(!rootEl) throw new Error("导图结构无法解析");
+      const rootTitle=rootEl.querySelector(":scope > title")?.textContent||"导图";
+      const childEls=[...rootEl.querySelectorAll(":scope > children > topics > topic")];
+      // 检查是否是兼容性警告文件
+      if(rootTitle.includes("Warning")||rootTitle.includes("警告")){
+        throw new Error("检测到旧版兼容性文件，请用 XMind 重新保存后再上传");
+      }
+      json={root:rootTitle,children:childEls.map(parseNode)};
+    }
+    // 只存入mindFixed，不覆盖mindData（版本A保持AI生成内容）
+    ST.mindFixed = normalizeMindData(json);
+    // 显示人工版本面板，渲染到human面板，不影响版本A
     const manualPanel=document.getElementById("mind-panel-manual");
     if(manualPanel) manualPanel.style.display="";
     renderMindMap("mind-svg-wrap-manual",json);
+    area.textContent="已载入 XMind："+f.name+" ("+json.children.length+" 个一级节点)";
     document.getElementById("btn-to-node4-direct").disabled=false;
     document.getElementById("btn-to-node3").disabled=false;
-    setStatus("XMind 已载入 ✓ 可对比三个版本后选择继续");
+    // 如果版本B也存在，显示合并面板
+    if(ST.mindDataB){
+      document.getElementById("merge-panel").style.display="block";
+    }
+    setStatus("XMind 已载入 ✓ 可对比三个版本后选择，或生成合并版本");
   }catch(e){
     area.classList.remove("ok");
     area.textContent="解析失败："+e.message;
@@ -1455,6 +1496,63 @@ function selectMindVersion(ver){
   setStatus(`已选择${labels[ver]}，可进入节点3补充或直接生成用例`);
 }
 
+async function runMergeVersions(){
+  if(!ST.mindDataB||!ST.mindFixed){
+    setStatus("需要同时有版本B和人工版本才能合并");return;
+  }
+  if(busy)return;busy=true;
+  setStatus("正在合并版本B与人工版本...",true);
+  try{
+    const res=await callAI(`你是QA测试架构师。将「人工版本」和「AI增强版本B」合并为最优测试思维导图。
+
+合并原则：
+1. 以人工版本为主体，保留所有人工节点，不删除、不修改
+2. 从版本B中提取人工版本没有但有价值的测试点，补充进来
+3. 保持人工版本的结构和层级不变
+4. 补充内容放在对应功能节点下，保持层级一致
+
+同时输出两部分，用===SPLIT===分隔：
+第一部分：合并后的完整JSON（不要任何说明文字或代码块标记）
+第二部分：修改说明，格式如下：
+【新增测试点】
+- 在「XX功能」下新增：XXX
+- 在「XX功能」下新增：XXX
+【未采纳的版本B内容】
+- XXX（原因：与人工版本重复/不适用）`,
+      `人工版本（主体）：
+${JSON.stringify(ST.mindFixed,null,2)}
+
+版本B（参考补充）：
+${JSON.stringify(ST.mindDataB,null,2)}`);
+
+    const parts=res.split("===SPLIT===");
+    let mergedJson=null;
+    let notes="";
+    try{
+      mergedJson=JSON.parse(parts[0].replace(/\`\`\`json|\`\`\`/g,"").trim());
+      notes=parts[1]?parts[1].trim():"";
+    }catch(e){
+      // 解析失败降级为人工版本
+      mergedJson=ST.mindFixed;
+      notes="合并解析失败，已使用人工版本";
+    }
+    ST.mindFixed=normalizeMindData(mergedJson);
+    ST.mindData=ST.mindFixed;
+
+    // 跳转节点3展示合并结果
+    jumpNode(3);
+    // 渲染修正前（人工版本原始）
+    renderMindMap("mind-before-wrap",ST.mindFixed);
+    // 渲染修正后（合并版本）
+    renderMindMap("mind-after-wrap",mergedJson);
+    // 显示修改说明
+    document.getElementById("mind-fix-notes").value=notes;
+    // 开放节点4按钮
+    document.getElementById("btn-to-node4").disabled=false;
+    setStatus("合并完成 ✓ 可下载合并版XMind或继续生成用例");
+  }catch(e){setStatus("合并失败："+e.message);}finally{busy=false;}
+}
+
 function clearManualXmind(){
   ST.mindFixed=null;
   const manualPanel=document.getElementById("mind-panel-manual");
@@ -1473,12 +1571,21 @@ function clearManualXmind(){
 }
 
 function exportXmindVersion(ver){
-  const data=ver==="a"?ST.mindDataA:ver==="b"?ST.mindDataB:ST.mindFixed;
+  let data=ver==="a"?ST.mindDataA:ver==="b"?ST.mindDataB:ST.mindFixed;
   if(!data){setStatus("暂无导图可导出");return;}
+  data=normalizeMindData(data);
   const origData=ST.mindData;
-  ST.mindData=data;
-  exportXmind();
-  ST.mindData=origData;
+  const origFixed=ST.mindFixed;
+  if(ver==="a"||ver==="b"){
+    ST.mindData=data;
+    exportXmind();
+    ST.mindData=origData;
+  } else {
+    // manual版本用fixed导出
+    ST.mindFixed=data;
+    exportXmind("fixed");
+    ST.mindFixed=origFixed;
+  }
 }
 
 // 兼容旧的mind-svg-wrap id
@@ -1487,6 +1594,19 @@ function getMindSvgWrap(){
 }
 
 function resetXmindUpload(){ clearManualXmind(); }
+
+// 统一处理思维导图数据格式，兼容 {root:{name,children}} 和 {root:"", children:[]} 两种格式
+function normalizeMindData(data){
+  if(!data) return data;
+  // 如果root是对象，提取name和children到顶层
+  if(data.root&&typeof data.root==="object"){
+    return {
+      root: data.root.name||data.root.title||"测试导图",
+      children: data.root.children||data.children||[]
+    };
+  }
+  return data;
+}
 
 function skipToNode4(){
   // 人工XMind或AI导图直接跳节点4，mindFixed=mindData
@@ -1656,6 +1776,8 @@ function clearAll(){
   ST.mindDataA=null; ST.mindDataB=null;
   const tip=document.getElementById("mind-version-tip");
   if(tip) tip.style.display="none";
+  const mp2=document.getElementById("merge-panel");
+  if(mp2) mp2.style.display="none";
   ["mind-panel-a","mind-panel-b"].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.border="0.5px solid var(--border)";
@@ -1832,8 +1954,8 @@ async function runMindGen(){
     let json;
     try{json=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}
     catch(e){json={root:"功能测试",children:[{name:"基础流程",children:[{name:"正常场景",children:[]},{name:"异常场景",children:[]},{name:"边界条件",children:[]}]}]};}
-    ST.mindData=json;
-    ST.mindDataA=json;
+    ST.mindData=normalizeMindData(json);
+    ST.mindDataA=ST.mindData;
     renderMindMap("mind-svg-wrap-a",json);
     // 生成版本B（带AI评审意见）
     setStatus("生成AI评审意见...",true);
@@ -1858,11 +1980,15 @@ ${ST.mindReview}`);
       setStatus("版本B生成失败，已降级为版本A："+e.message);
       jsonB=json;
     }
-    ST.mindDataB=jsonB;
+    ST.mindDataB=normalizeMindData(jsonB);
     renderMindMap("mind-svg-wrap-b",jsonB);
     // 版本B也做评审
     setStatus("评审版本B...",true);
     await runMindReview(jsonB,"b");
+    // 如果人工版本也存在，显示合并面板
+    if(ST.mindFixed){
+      document.getElementById("merge-panel").style.display="block";
+    }
     // 不默认选版本，需用户手动选择
     document.getElementById("btn-to-node3").disabled=false;
     document.getElementById("btn-to-node4-direct").disabled=false;
@@ -1894,8 +2020,8 @@ async function runNode3(){
       `原始导图：\n${JSON.stringify(ST.mindData,null,2)}\n\n评审意见：\n${ST.mindReview}`);
     let fixed;
     try{fixed=JSON.parse(res.replace(/\`\`\`json|\`\`\`/g,"").trim());}catch(e){fixed=ST.mindData;}
-    ST.mindFixed=fixed;
-    renderMindMap("mind-after-wrap",fixed);
+    ST.mindFixed=normalizeMindData(fixed);
+    renderMindMap("mind-after-wrap",ST.mindFixed);
     const notes=await callAI("简要说明对思维导图做了哪些修正（3-5条，中文，每条一行）",
       `原始：${JSON.stringify(ST.mindData)}\n修正后：${JSON.stringify(fixed)}`);
     document.getElementById("mind-fix-notes").value=notes;
@@ -1908,7 +2034,7 @@ async function runNode4(){
   if(busy)return;busy=true;
   setStatus(getModelCfg().label+" 生成测试用例...",true);
   try{
-    const mind=ST.mindFixed||ST.mindData;
+    const mind=normalizeMindData(ST.mindFixed||ST.mindData);
     const platform=document.getElementById("module-platform")?.value||"app";
     const moduleName=document.getElementById("module-name")?.value||"";
     const modulePath=buildModulePath(platform,moduleName);
