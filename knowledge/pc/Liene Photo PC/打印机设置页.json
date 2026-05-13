@@ -1,0 +1,174 @@
+{
+  "name": "Liene Photo PC /打印机设置页",
+  "platform": "pc",
+  "updatedAt": "2026/5/13",
+  "iteration": "2026-W03",
+  "cases": [
+    {
+      "title": "打印机设置页-入口",
+      "precondition": "",
+      "steps": "1. 进入APP，点击右上角打印机状态右侧箭头 \n2. 点击查看详情",
+      "expected": "1. 向下弹出打印机设置页\nLiene PixCut S1-****\n打印机状态        查看详情 \n2. 弹出设置页弹窗\nLiene PixCut S1-****    打印机状态\nDevice Firmware             Machine Model     Serial Number\n****(有更高固件时展示‘更新’)DHP***    *********      \n                                                                 删除打印机按钮",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-关闭",
+      "precondition": "",
+      "steps": "1. 进入APP，点击右上角打印机状态右侧箭头 \n2. 再次点击打印机状态右侧箭头或页面外任意区域",
+      "expected": "1. 向下弹出打印机设置页 \n2. 收起打印机设置页",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-设备状态-离线",
+      "precondition": "",
+      "steps": "1. 进入APP，未连接打印机，点击并查看右上角打印机状态右侧箭头",
+      "expected": "1. 状态展示【离线】，\n弹出弹窗\n打印和切割机\n\n检查机器是否打开\n长按机器开机键3S\n\n确保已通过数据线连接机器和电脑\n请检查USB线有数据传输功能",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-设备状态-初始化",
+      "precondition": "",
+      "steps": "1. 进入APP，添加处于初始化状态的打印机，点击并查看右上角打印机状态右侧箭头",
+      "expected": "1. 状态展示Initializing，向下弹出打印机设置页\n首行展示打印机名称\n打印机状态   查看详情>",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-设备状态-在线",
+      "precondition": "",
+      "steps": "1. 进入APP，已连接打印机，点击并查看右上角打印机状态右侧箭头",
+      "expected": "1. 状态展示待机，向下弹出打印机设置页，页面展示正确",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-设备状态-睡眠",
+      "precondition": "",
+      "steps": "1. 进入APP，已连接打印机，打印机处于睡眠状态，点击并查看右上角打印机状态右侧箭头",
+      "expected": "1. 状态展示Sleep，向下弹出打印机设置页，页面展示正确",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-设备状态-打印中",
+      "precondition": "",
+      "steps": "1. 发送打印任务，查看右上角打印机状态右侧箭头 \n2. 从其他设备发送打印任务，查看右上角打印机状态右侧箭头",
+      "expected": "1. 状态展示打印中，向下弹出打印机设置页，页面展示正确 \n2. 状态展示打印中，向下弹出打印机设置页，页面展示正确",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-设备状态-切割中",
+      "precondition": "",
+      "steps": "1. 发送切割任务，查看右上角打印机状态右侧箭头 \n2. 从其他设备发送切割任务，查看右上角打印机状态右侧箭头",
+      "expected": "1. 状态展示Cutting,向下弹出打印机设置页，页面展示正确 \n2. 状态展示Cutting,向下弹出打印机设置页，页面展示正确",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前无升级",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前无固件升级版本，\n点击【固件信息             xxxxxx ＞】中的“＞”按钮",
+      "expected": "1. 展示打印机固件信息\n固件版本后无UPdate按钮",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-固件升级弹窗",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，首次进入程序 \n2. 【暂不更新】 \n3. 【立即更新】",
+      "expected": "1. 检测到固件升级后，弹出固件升级弹窗：【提示】\n检测到新版本固件，为保证打印机正常运行，请完成固件更新，否则将无法正常使用。\n【暂不更新】【立即更新】 \n2. 弹窗关闭，后续不会再弹出此弹窗，需重启APP后再弹 \n3. 打开固件升级浮层\n页面标题：【固件升级】\n升级过程，确保通电且连接USB线，不要离开当前页面\n（进度条 XX%）\n目标版本：xxx\n当前版本版本：xxx\n右下角：【完成】灰置",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-在线",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击【固件信息】 \n3. 点击【开始升级】 \n4. 观察设备状态",
+      "expected": "1. 向下弹出打印机设置页，页面【固件信息】有小红点提示 \n2. 打开固件升级浮层\n页面标题：【固件升级】  右上角：×\nUpgrading...Stay on this page keep power and USB connected\n(升级过程，确保通电且连接USB线，不要离开当前页面)\n目标版本：xxx\n当前版本：xxx\n右下角：【开始升级】 \n3. 进入固件升级流程，中间展示下载进度，升级成功后展示升级成功页面 \n4. 右上角打印机状态变为固件升级中",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-固件升级-固件升级中-取消",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击【Frimware Info】 \n3. 点击开始升级 \n4. 点击Done \n5. 安装过程中，查看安装页面",
+      "expected": "1. 向下弹出打印机设置页，页面【Frimware Info】有小红点提示 \n2. 打开固件升级浮层\n页面标题：【Frimware Upgrade】  右上角：×\nUpgrading...Stay on this page keep power and USB connected\n(升级过程，确保通电且连接USB线，不要离开当前页面)\n目标版本：xxx\n当前版本：xxx\n右下角：【Start Upgrade】 \n3. 进入固件升级流程 \n4. 无法点击，置灰 \n5. 页面无取消按钮",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-下载失败",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击Frimware Info \n3. 点击开始升级 \n4. 断开网络或制造弱网",
+      "expected": "1. 向下弹出打印机设置页，页面【Frimware Info】有小红点提示 \n2. 打开固件升级浮层 \n3. 进入固件升级流程 \n4. 下载失败，弹出弹窗：【Note】下载失败【Got it】",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-打印机离线",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，点击右上角打印机状态 \n2. 点击【固件信息】 \n3. 点击开始升级 \n4. 下载或安装的过程中，断开与打印机的连接 \n5. 未连接点击【重试】 \n6. 连接后点击【重试】",
+      "expected": "1. 向下弹出打印机设置页，页面【固件信息】有小红点提示 \n2. 打开固件升级浮层 \n3. 进入固件升级流程 \n4. 弹出弹窗：\n【固件升级】\n升级过程，确保通电且连接USB线，不要离开当前页面\n     安装失败\n目标版本：\n当前版本：\n【重试】 \n5. 无法点击 \n6. 进入固件升级页面",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    },
+    {
+      "title": "打印机设置页-固件升级-当前有升级-通过其它设备发送固件升级",
+      "precondition": "",
+      "steps": "1. 已连接打印机，当前有固件升级版本，使用其他设备给打印机发送固件升级 \n2. 观察右上角打印机状态",
+      "expected": "1. 无 \n2. 右上角打印机状态变为“正在升级固件”",
+      "importance": "中",
+      "type": "功能测试",
+      "test_type": "手工测试",
+      "maintainer": "",
+      "module": "Liene Photo PC /打印机设置页"
+    }
+  ],
+  "history": []
+}
