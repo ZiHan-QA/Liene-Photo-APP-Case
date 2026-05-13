@@ -202,6 +202,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-2" onclick="jumpNode(2)"><div class="nn">节点 2</div><div class="nl">思维导图</div><div class="ns">生成+评审</div></div></div>
   <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-change1" onclick="jumpNode('change1')" style="border-color:var(--coral-bd);opacity:.7"><div class="nn" style="color:var(--coral-t)">变更</div><div class="nl" style="color:var(--coral-t)">需求变更</div><div class="ns">可选</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-3" onclick="jumpNode(3)"><div class="nn">节点 3</div><div class="nl">导图修正</div><div class="ns">自动修正</div></div></div>
   <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-4" onclick="jumpNode(4)"><div class="nn">节点 4</div><div class="nl">生成用例</div><div class="ns">结构化输出</div></div></div>
@@ -209,6 +211,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="nc"><div class="nb" id="nb-5" onclick="jumpNode(5)"><div class="nn">节点 5</div><div class="nl">用例评审</div><div class="ns">质量检查</div></div></div>
   <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-6" onclick="jumpNode(6)"><div class="nn">节点 6</div><div class="nl">用例修正</div><div class="ns">最终输出</div></div></div>
+  <div class="arrc"><div class="arr"></div></div>
+  <div class="nc"><div class="nb" id="nb-change2" onclick="jumpNode('change2')" style="border-color:var(--coral-bd);opacity:.7"><div class="nn" style="color:var(--coral-t)">变更</div><div class="nl" style="color:var(--coral-t)">需求变更</div><div class="ns">可选</div></div></div>
   <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-kb" onclick="jumpNode(7)" style="border-color:var(--purple-bd)"><div class="nn" style="color:var(--purple-t)">知识库</div><div class="nl" style="color:var(--purple-t)">管理中心</div><div class="ns">查看/编辑/回滚</div></div></div>
 </div>
@@ -496,6 +500,50 @@ button:disabled{opacity:.4;cursor:not-allowed}
   </div>
 </div>
 
+<!-- ── 需求变更节点 ── -->
+<div class="view" id="view-change">
+  <div class="sdiv">需求变更 — 可选节点</div>
+  <div class="pa">
+    <div class="panel full">
+      <div class="ph"><div class="dot" style="background:var(--coral-bd)"></div>变更描述
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">描述需要变更的需求，支持多条（每行一条）</span>
+      </div>
+      <textarea id="change-input" placeholder="例如：&#10;新增画布功能取消&#10;Banner只支持图片类型，去掉视频类型&#10;搜索功能延期，本版本不做" style="min-height:120px;resize:vertical"></textarea>
+      <div class="br">
+        <button class="btnp" onclick="runChangeAnalysis()">分析变更影响 ↗</button>
+        <button onclick="jumpNode(ST.changeFrom||2)" style="font-size:11px">← 返回</button>
+      </div>
+    </div>
+  </div>
+  <!-- 影响分析结果 -->
+  <div id="change-result" style="display:none">
+    <div class="pa">
+      <div class="panel full">
+        <div class="ph"><div class="dot" style="background:var(--amber-bd)"></div>受影响项目
+          <span style="font-size:11px;color:var(--text3);margin-left:4px">勾选要删除/修改的项，然后执行变更</span>
+        </div>
+        <div id="change-items-list" style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto"></div>
+        <div class="br" style="margin-top:8px">
+          <button class="btnp" onclick="applyChanges()" id="btn-apply-changes">执行变更 ↗</button>
+          <button onclick="selectAllChanges(true)" style="font-size:11px">全选</button>
+          <button onclick="selectAllChanges(false)" style="font-size:11px">取消全选</button>
+        </div>
+      </div>
+    </div>
+    <!-- 变更记录 -->
+    <div class="pa">
+      <div class="panel full">
+        <div class="ph"><div class="dot" style="background:#639922"></div>变更记录</div>
+        <textarea id="change-log" readonly style="min-height:80px;font-size:11px"></textarea>
+        <div class="br">
+          <button onclick="exportChangeLog()">导出变更记录 ↓</button>
+          <button onclick="jumpNode(ST.changeFrom===6?6:3)" class="btnp" id="btn-after-change">继续流程 ↗</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── 知识库管理 ── -->
 <div class="view" id="view-7">
   <div class="sdiv">知识库管理中心</div>
@@ -587,7 +635,7 @@ const PLATFORM_COLORS={
   pc:{bg:"var(--purple-bg)",t:"var(--purple-t)",bd:"var(--purple-bd)"},
   admin:{bg:"var(--amber-bg)",t:"var(--amber-t)",bd:"var(--amber-bd)"}
 };
-const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindDataA:null,mindDataB:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[],relatedModules:[]};
+const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindDataA:null,mindDataB:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[],relatedModules:[],changeFrom:2};
 let busy=false;
 const nodeColors=[
   {bg:"var(--blue-bg)",bd:"var(--blue-bd)",nt:"var(--blue-t)"},
@@ -1649,25 +1697,113 @@ function showRelatedPanel(){
   renderRelatedModuleList();
 }
 
+function buildModuleTree(modules, platform){
+  // 把模块列表按路径递归构建树
+  const tree={};
+  modules.forEach(m=>{
+    const parts=(m.name||"").split("/").filter(p=>p.trim());
+    let node=tree;
+    parts.forEach((part,i)=>{
+      if(!node[part]) node[part]={_children:{},_modules:[]};
+      if(i===parts.length-1) node[part]._modules.push(m);
+      node=node[part]._children;
+    });
+  });
+  return tree;
+}
+
+function renderRelatedTree(tree, platform, pc, depth, pathPrefix){
+  let html="";
+  const indent=depth*14;
+  Object.keys(tree).forEach(key=>{
+    const node=tree[key];
+    const hasChildren=Object.keys(node._children).length>0;
+    const hasModules=node._modules.length>0;
+    const fullPath=pathPrefix?pathPrefix+"/"+key:key;
+    // 用计数器保证ID唯一，不依赖路径
+    const nodeId="rn-"+Math.random().toString(36).slice(2,10);
+
+    if(hasChildren){
+      // 目录节点，可折叠
+      const childCount=countTreeModules(node);
+      html+=`<div style="margin-left:${indent}px;margin-bottom:2px">
+        <div onclick="toggleRelatedGroup('${nodeId}')" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--r);background:var(--bg2);cursor:pointer;user-select:none">
+          <span id="${nodeId}-arrow" style="font-size:10px;color:var(--text3);transition:transform .15s">▶</span>
+          <span style="font-size:12px;color:var(--text)">${key}</span>
+          <span style="font-size:11px;color:var(--text3);margin-left:auto">${childCount}个</span>
+        </div>
+        <div id="${nodeId}" style="display:none">
+          ${hasModules?node._modules.map(m=>renderRelatedLeaf(m,pc,0)).join(""):""}
+          ${renderRelatedTree(node._children,platform,pc,depth+1,fullPath)}
+        </div>
+      </div>`;
+    } else if(hasModules){
+      // 叶子节点
+      html+=node._modules.map(m=>renderRelatedLeaf(m,pc,indent)).join("");
+    }
+  });
+  return html;
+}
+
+function countTreeModules(node){
+  let count=node._modules.length;
+  Object.values(node._children).forEach(c=>{count+=countTreeModules(c);});
+  return count;
+}
+
+function renderRelatedLeaf(m, pc, indent){
+  const isSelected=ST.relatedModules.some(r=>r.name===m.name&&r.platform===m.platform);
+  const shortName=(m.name||"").split("/").pop();
+  return `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;margin-left:${indent}px;border-radius:var(--r);border:0.5px solid ${isSelected?pc.bd:"var(--border)"};cursor:pointer;margin-bottom:2px;background:${isSelected?pc.bg:"var(--bg2)"}" onclick="toggleRelatedModule('${escAttr(m.name)}','${m.platform||"app"}',this)">
+    <div style="width:14px;height:14px;border-radius:3px;border:1.5px solid ${isSelected?pc.bd:"var(--border2)"};background:${isSelected?"var(--bg)":"transparent"};flex-shrink:0;display:flex;align-items:center;justify-content:center">
+      ${isSelected?`<span style="color:${pc.t};font-size:10px;font-weight:700">✓</span>`:""}
+    </div>
+    <span style="font-size:12px">${shortName}</span>
+    <span style="font-size:11px;color:var(--text3);margin-left:auto">${m.caseCount||0}条</span>
+  </div>`;
+}
+
 function renderRelatedModuleList(){
   const list=document.getElementById("related-module-list");
   if(!ST.kb||ST.kb.length===0){
     list.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:8px">请先点击「读取知识库」</div>`;
     return;
   }
-  list.innerHTML=ST.kb.map(m=>{
-    const isSelected=ST.relatedModules.some(r=>r.name===m.name&&r.platform===m.platform);
-    const pc=PLATFORM_COLORS[m.platform||"app"];
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg2);border-radius:var(--r);border:0.5px solid ${isSelected?pc.bd:"var(--border)"};cursor:pointer" onclick="toggleRelatedModule('${escAttr(m.name)}','${m.platform||"app"}',this)">
-      <div style="width:14px;height:14px;border-radius:3px;border:1.5px solid ${isSelected?pc.bd:"var(--border2)"};background:${isSelected?pc.bg:"transparent"};flex-shrink:0;display:flex;align-items:center;justify-content:center">
-        ${isSelected?`<span style="color:${pc.t};font-size:10px">✓</span>`:""}
+  const platforms=["app","pad","pc","admin"];
+  let html="";
+  platforms.forEach(p=>{
+    const modules=ST.kb.filter(m=>(m.platform||"app")===p);
+    if(!modules.length) return;
+    const pc=PLATFORM_COLORS[p];
+    const platformId="related-platform-"+p;
+    const tree=buildModuleTree(modules,p);
+    html+=`<div style="margin-bottom:6px">
+      <div onclick="toggleRelatedGroup('${platformId}')" style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:var(--r);background:${pc.bg};color:${pc.t};border:0.5px solid ${pc.bd};cursor:pointer;user-select:none">
+        <span id="${platformId}-arrow" style="font-size:10px;transition:transform .15s">▶</span>
+        <span style="font-size:12px;font-weight:500">${PLATFORM_LABELS[p]}</span>
+        <span style="font-size:11px;opacity:.7;margin-left:auto">${modules.length}个模块</span>
       </div>
-      <span style="font-size:12px;font-weight:500">${m.name}</span>
-      <span style="font-size:11px;color:var(--text3);margin-left:auto">${PLATFORM_LABELS[m.platform||"app"]} · ${m.caseCount||0}条</span>
+      <div id="${platformId}" style="display:none;margin-top:4px">
+        ${renderRelatedTree(tree,p,pc,1,"")}
+      </div>
     </div>`;
-  }).join("");
+  });
+  list.innerHTML=html;
   updateRelatedCount();
   syncRelatedSaveList();
+}
+
+function toggleRelatedGroup(id){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById(id+"-arrow");
+  if(!el) return;
+  const isOpen=el.style.display!=="none";
+  el.style.display=isOpen?"none":"block";
+  if(arrow) arrow.style.transform=isOpen?"":"rotate(90deg)";
+}
+
+function renderRelatedItem(m, isSelected, pc, indent){
+  return renderRelatedLeaf(m, pc, indent);
 }
 
 async function toggleRelatedModule(name, platform, el){
@@ -1742,6 +1878,22 @@ function jumpNode(n){
     document.getElementById("view-7").classList.remove("active");
     nbKb.style.borderWidth="0.5px";
   }
+  // 变更节点
+  const viewChange=document.getElementById("view-change");
+  const nb1=document.getElementById("nb-change1");
+  const nb2=document.getElementById("nb-change2");
+  if(n==="change1"||n==="change2"){
+    if(viewChange) viewChange.classList.add("active");
+    ST.changeFrom=n==="change1"?2:6;
+    const btnAfter=document.getElementById("btn-after-change");
+    if(btnAfter) btnAfter.textContent=n==="change1"?"进入节点3 ↗":"进入知识库 ↗";
+    if(nb1) nb1.style.borderWidth=n==="change1"?"1.5px":"0.5px";
+    if(nb2) nb2.style.borderWidth=n==="change2"?"1.5px":"0.5px";
+  } else {
+    if(viewChange) viewChange.classList.remove("active");
+    if(nb1) nb1.style.borderWidth="0.5px";
+    if(nb2) nb2.style.borderWidth="0.5px";
+  }
 }
 function renderScores(id,text){
   const el=document.getElementById(id);el.innerHTML="";
@@ -1787,6 +1939,11 @@ function clearAll(){
   ["btn-to-node2","btn-to-node3","btn-to-node4","btn-to-node5","btn-to-node6"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.disabled=true;
   });
+  changeItems=[];
+  const changeResult=document.getElementById("change-result");
+  if(changeResult) changeResult.style.display="none";
+  const changeInput=document.getElementById("change-input");
+  if(changeInput) changeInput.value="";
   jumpNode(1);setStatus("已重置");
 }
 function copyText(id){
@@ -2407,6 +2564,127 @@ function cancelImport(){
   document.getElementById("import-preview").style.display="none";
   document.getElementById("import-area").textContent="上传历史 Excel 用例文件，自动解析并填入知识库\n支持你们标准格式：模块/标题/步骤描述/预期结果...";
   document.getElementById("import-input").value="";
+}
+
+// ── 需求变更 ──
+let changeItems=[];
+
+async function runChangeAnalysis(){
+  const input=document.getElementById("change-input").value.trim();
+  if(!input){setStatus("请先输入变更描述");return;}
+  if(busy)return;busy=true;
+  setStatus("分析变更影响范围...",true);
+  try{
+    const hasMind=!!(ST.mindFixed||ST.mindData);
+    const hasCases=!!(ST.cases&&(Array.isArray(ST.cases)?ST.cases.length:ST.cases));
+    const mindData=hasMind?normalizeMindData(ST.mindFixed||ST.mindData):null;
+    const casesData=hasCases?(Array.isArray(ST.cases)?ST.cases:[]):[];
+    const res=await callAI(`你是QA测试工程师。根据需求变更描述，分析对测试导图和测试用例的影响。
+严格按以下JSON格式输出，不要任何说明文字：
+{"summary":"变更影响概述","mind_items":[{"path":"节点路径","action":"delete/modify","reason":"原因","new_content":"修改为（delete时为空）"}],"case_items":[{"title":"用例标题","action":"delete/modify","reason":"原因","new_content":"修改建议（delete时为空）"}]}`,
+    (()=>{
+      const parts=["变更描述：",input,""];
+      if(mindData) parts.push("当前测试导图：",""+JSON.stringify(mindData,null,2));
+      else parts.push("（暂无导图）");
+      parts.push("");
+      if(casesData.length) parts.push("当前测试用例（标题列表）：",""+casesData.map(c=>c.title||"").join("\n"));
+      else parts.push("（暂无用例）");
+      return parts.join("\n");
+    })());
+    let analysis;
+    try{
+      let cleaned=res.replace(/```json|```/g,"").trim();
+      const s=cleaned.indexOf("{"),e=cleaned.lastIndexOf("}");
+      if(s>=0&&e>s) cleaned=cleaned.slice(s,e+1);
+      analysis=JSON.parse(cleaned);
+    }catch(e){setStatus("分析结果解析失败："+e.message);return;}
+    changeItems=[];
+    (analysis.mind_items||[]).forEach(item=>{changeItems.push({...item,source:"mind",selected:true});});
+    (analysis.case_items||[]).forEach(item=>{changeItems.push({...item,source:"case",selected:true});});
+    const list=document.getElementById("change-items-list");
+    if(changeItems.length===0){
+      list.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:12px">未发现受影响的导图节点或用例</div>`;
+    } else {
+      list.innerHTML=changeItems.map((item,i)=>`
+        <div style="display:flex;gap:8px;padding:10px 12px;background:var(--bg2);border-radius:var(--r);border:0.5px solid ${item.action==="delete"?"#F7C1C1":"var(--amber-bd)"}">
+          <input type="checkbox" id="change-cb-${i}" checked onchange="changeItems[${i}].selected=this.checked" style="margin-top:2px;flex-shrink:0">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <span style="font-size:11px;padding:2px 6px;border-radius:99px;${item.action==="delete"?"background:#FCEBEB;color:#A32D2D":"background:var(--amber-bg);color:var(--amber-t)"}">
+                ${item.action==="delete"?"删除":"修改"}</span>
+              <span style="font-size:11px;padding:2px 6px;border-radius:99px;background:var(--bg3);color:var(--text3)">
+                ${item.source==="mind"?"导图节点":"测试用例"}</span>
+              <span style="font-size:12px;font-weight:500">${item.path||item.title||""}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text3)">原因：${item.reason||""}</div>
+            ${item.new_content?`<div style="font-size:11px;color:var(--amber-t);margin-top:2px">修改为：${item.new_content}</div>`:""}
+          </div>
+        </div>`).join("");
+    }
+    document.getElementById("change-result").style.display="block";
+    document.getElementById("change-log").value=["变更分析摘要："+(analysis.summary||""),"","受影响导图节点："+(analysis.mind_items||[]).length+"个","受影响测试用例："+(analysis.case_items||[]).length+"条"].join("\n");
+    setStatus("变更影响分析完成，请确认后执行变更");
+  }catch(e){setStatus("分析失败："+e.message);}finally{busy=false;}
+}
+
+function selectAllChanges(val){
+  changeItems.forEach((item,i)=>{
+    item.selected=val;
+    const cb=document.getElementById("change-cb-"+i);
+    if(cb) cb.checked=val;
+  });
+}
+
+async function applyChanges(){
+  const selected=changeItems.filter(i=>i.selected);
+  if(!selected.length){setStatus("请先勾选要变更的项");return;}
+  if(busy)return;busy=true;
+  setStatus("执行变更...",true);
+  try{
+    const now=new Date().toLocaleDateString("zh-CN");
+    let log="变更执行记录 "+now+"\n"+"═".repeat(40)+"\n";
+    const mindChanges=selected.filter(i=>i.source==="mind");
+    if(mindChanges.length&&(ST.mindFixed||ST.mindData)){
+      const mind=normalizeMindData(ST.mindFixed||ST.mindData);
+      const changeInstructions=mindChanges.map(c=>"- "+(c.action==="delete"?"删除":"修改")+"节点「"+c.path+"」"+(c.new_content?"，改为："+c.new_content:"")).join("\n");
+      const res=await callAI("根据变更指令修改测试思维导图JSON。只输出修改后的完整JSON，不要任何说明文字。\n变更指令：\n"+changeInstructions,
+        "当前导图：\n"+JSON.stringify(mind,null,2));
+      try{
+        let cleaned=res.replace(/```json|```/g,"").trim();
+        const s=cleaned.indexOf("{"),e=cleaned.lastIndexOf("}");
+        if(s>=0&&e>s) cleaned=cleaned.slice(s,e+1);
+        ST.mindFixed=normalizeMindData(JSON.parse(cleaned));
+        ST.mindData=ST.mindFixed;
+        log+="\n【导图变更】\n"+mindChanges.map(c=>"✓ "+(c.action==="delete"?"删除":"修改")+"："+c.path).join("\n");
+      }catch(e){log+="\n【导图变更失败】"+e.message;}
+    }
+    const caseChanges=selected.filter(i=>i.source==="case");
+    if(caseChanges.length&&ST.cases){
+      const casesArr=Array.isArray(ST.cases)?ST.cases:[];
+      const deleteSet=new Set(caseChanges.filter(c=>c.action==="delete").map(c=>c.title));
+      const modifyMap={};
+      caseChanges.filter(c=>c.action==="modify").forEach(c=>{modifyMap[c.title||""]=c.new_content;});
+      let newCases=casesArr.filter(c=>!deleteSet.has(c.title||""));
+      newCases=newCases.map(c=>modifyMap[c.title||""]?{...c,title:modifyMap[c.title||""]||c.title}:c);
+      ST.cases=newCases;
+      ST.casesFinal=newCases;
+      log+="\n\n【用例变更】\n"+caseChanges.map(c=>"✓ "+(c.action==="delete"?"删除":"修改")+"："+c.title).join("\n");
+    }
+    log+="\n\n变更描述：\n"+document.getElementById("change-input").value;
+    document.getElementById("change-log").value=log;
+    changeItems=changeItems.filter(i=>!i.selected);
+    setStatus(`变更执行完成 ✓ 共处理 ${selected.length} 项`);
+  }catch(e){setStatus("变更执行失败："+e.message);}finally{busy=false;}
+}
+
+function exportChangeLog(){
+  const log=document.getElementById("change-log").value;
+  if(!log){setStatus("暂无变更记录");return;}
+  const blob=new Blob([log],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="变更记录_"+new Date().toLocaleDateString("zh-CN").replace(/\//g,"-")+".txt";
+  a.click();
 }
 </script>
 </body>
