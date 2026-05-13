@@ -202,8 +202,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-2" onclick="jumpNode(2)"><div class="nn">节点 2</div><div class="nl">思维导图</div><div class="ns">生成+评审</div></div></div>
   <div class="arrc"><div class="arr"></div></div>
-  <div class="nc"><div class="nb" id="nb-change1" onclick="jumpNode('change1')" style="border-color:var(--coral-bd);opacity:.7"><div class="nn" style="color:var(--coral-t)">变更</div><div class="nl" style="color:var(--coral-t)">需求变更</div><div class="ns">可选</div></div></div>
-  <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-3" onclick="jumpNode(3)"><div class="nn">节点 3</div><div class="nl">导图修正</div><div class="ns">自动修正</div></div></div>
   <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-4" onclick="jumpNode(4)"><div class="nn">节点 4</div><div class="nl">生成用例</div><div class="ns">结构化输出</div></div></div>
@@ -212,12 +210,13 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-6" onclick="jumpNode(6)"><div class="nn">节点 6</div><div class="nl">用例修正</div><div class="ns">最终输出</div></div></div>
   <div class="arrc"><div class="arr"></div></div>
-  <div class="nc"><div class="nb" id="nb-change2" onclick="jumpNode('change2')" style="border-color:var(--coral-bd);opacity:.7"><div class="nn" style="color:var(--coral-t)">变更</div><div class="nl" style="color:var(--coral-t)">需求变更</div><div class="ns">可选</div></div></div>
-  <div class="arrc"><div class="arr"></div></div>
   <div class="nc"><div class="nb" id="nb-kb" onclick="jumpNode(7)" style="border-color:var(--purple-bd)"><div class="nn" style="color:var(--purple-t)">知识库</div><div class="nl" style="color:var(--purple-t)">管理中心</div><div class="ns">查看/编辑/回滚</div></div></div>
 </div>
 
-<div class="status" id="status"></div>
+<div style="display:flex;align-items:center;gap:8px;min-height:22px;margin-bottom:10px">
+  <div class="status" id="status" style="margin-bottom:0;flex:1"></div>
+  <button id="btn-abort" onclick="abortTask()" style="display:none;font-size:11px;padding:3px 10px;background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1;flex-shrink:0">终止任务</button>
+</div>
 
 <!-- ── 节点1 ── -->
 <div class="view active" id="view-1">
@@ -511,50 +510,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
   </div>
 </div>
 
-<!-- ── 需求变更节点 ── -->
-<div class="view" id="view-change">
-  <div class="sdiv">需求变更 — 可选节点</div>
-  <div class="pa">
-    <div class="panel full">
-      <div class="ph"><div class="dot" style="background:var(--coral-bd)"></div>变更描述
-        <span style="font-size:11px;color:var(--text3);margin-left:4px">描述需要变更的需求，支持多条（每行一条）</span>
-      </div>
-      <textarea id="change-input" placeholder="例如：&#10;新增画布功能取消&#10;Banner只支持图片类型，去掉视频类型&#10;搜索功能延期，本版本不做" style="min-height:120px;resize:vertical"></textarea>
-      <div class="br">
-        <button class="btnp" onclick="runChangeAnalysis()">分析变更影响 ↗</button>
-        <button onclick="jumpNode(ST.changeFrom||2)" style="font-size:11px">← 返回</button>
-      </div>
-    </div>
-  </div>
-  <!-- 影响分析结果 -->
-  <div id="change-result" style="display:none">
-    <div class="pa">
-      <div class="panel full">
-        <div class="ph"><div class="dot" style="background:var(--amber-bd)"></div>受影响项目
-          <span style="font-size:11px;color:var(--text3);margin-left:4px">勾选要删除/修改的项，然后执行变更</span>
-        </div>
-        <div id="change-items-list" style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto"></div>
-        <div class="br" style="margin-top:8px">
-          <button class="btnp" onclick="applyChanges()" id="btn-apply-changes">执行变更 ↗</button>
-          <button onclick="selectAllChanges(true)" style="font-size:11px">全选</button>
-          <button onclick="selectAllChanges(false)" style="font-size:11px">取消全选</button>
-        </div>
-      </div>
-    </div>
-    <!-- 变更记录 -->
-    <div class="pa">
-      <div class="panel full">
-        <div class="ph"><div class="dot" style="background:#639922"></div>变更记录</div>
-        <textarea id="change-log" readonly style="min-height:80px;font-size:11px"></textarea>
-        <div class="br">
-          <button onclick="exportChangeLog()">导出变更记录 ↓</button>
-          <button onclick="jumpNode(ST.changeFrom===6?6:3)" class="btnp" id="btn-after-change">继续流程 ↗</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ── 知识库管理 ── -->
 <div class="view" id="view-7">
   <div class="sdiv">知识库管理中心</div>
@@ -646,8 +601,9 @@ const PLATFORM_COLORS={
   pc:{bg:"var(--purple-bg)",t:"var(--purple-t)",bd:"var(--purple-bd)"},
   admin:{bg:"var(--amber-bg)",t:"var(--amber-t)",bd:"var(--amber-bd)"}
 };
-const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindDataA:null,mindDataB:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[],relatedModules:[],changeFrom:2};
+const ST={prdText:"",prdReview:"",prdSupplement:"",mindData:null,mindDataA:null,mindDataB:null,mindReview:"",mindFixed:null,cases:"",casesReview:"",casesFinal:"",kb:[],relatedModules:[]};
 let busy=false;
+let abortController=null;
 const nodeColors=[
   {bg:"var(--blue-bg)",bd:"var(--blue-bd)",nt:"var(--blue-t)"},
   {bg:"var(--teal-bg)",bd:"var(--teal-bd)",nt:"var(--teal-t)"},
@@ -1512,15 +1468,17 @@ async function callAI(system,user){
   // buildKbContext不传phase时只返回模块列表摘要，不带详细上下文
   const kbCtx=ST.kb&&ST.kb.length>0?"已评审功能模块："+ST.kb.map(m=>m.name+"（"+m.caseCount+"条）").join("；"):"";
   const fullSystem=kbCtx?system+"\n\n【知识库摘要】\n"+kbCtx:system;
+  abortController=new AbortController();
+  const signal=abortController.signal;
   if(provider==="claude"){
-    const r=await fetch(apiUrl,{method:"POST",
+    const r=await fetch(apiUrl,{method:"POST",signal,
       headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},
       body:JSON.stringify({model:mid,max_tokens:8000,system:fullSystem,messages:[{role:"user",content:user}]})});
     const d=await r.json();
     if(!d.content) throw new Error(d.error?.message||"Anthropic API 请求失败");
     return d.content.map(b=>b.text||"").join("");
   } else {
-    const r=await fetch(apiUrl,{method:"POST",
+    const r=await fetch(apiUrl,{method:"POST",signal,
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
       body:JSON.stringify({model:mid,max_tokens:8000,
         messages:[{role:"system",content:fullSystem},{role:"user",content:user}]})});
@@ -1809,8 +1767,10 @@ function toggleRelatedGroup(id){
   const el=document.getElementById(id);
   const arrow=document.getElementById(id+"-arrow");
   if(!el) return;
-  const isOpen=el.style.display!=="none";
+  // 用data属性跟踪状态，避免display值判断不准
+  const isOpen=el.dataset.open==="1";
   el.style.display=isOpen?"none":"block";
+  el.dataset.open=isOpen?"0":"1";
   if(arrow) arrow.style.transform=isOpen?"":"rotate(90deg)";
 }
 
@@ -1863,6 +1823,17 @@ function syncRelatedSaveList(){
 function setStatus(msg,spin){
   document.getElementById("status").innerHTML=spin
     ?`<div class="spin"></div><span>${msg}</span>`:`<span>${msg}</span>`;
+  const btn=document.getElementById("btn-abort");
+  if(btn) btn.style.display=spin?"inline-block":"none";
+}
+
+function abortTask(){
+  busy=false;
+  if(abortController){
+    abortController.abort();
+    abortController=null;
+  }
+  setStatus("任务已终止");
 }
 function jumpNode(n){
   for(let i=1;i<=6;i++){
@@ -1889,22 +1860,6 @@ function jumpNode(n){
   } else {
     document.getElementById("view-7").classList.remove("active");
     nbKb.style.borderWidth="0.5px";
-  }
-  // 变更节点
-  const viewChange=document.getElementById("view-change");
-  const nb1=document.getElementById("nb-change1");
-  const nb2=document.getElementById("nb-change2");
-  if(n==="change1"||n==="change2"){
-    if(viewChange) viewChange.classList.add("active");
-    ST.changeFrom=n==="change1"?2:6;
-    const btnAfter=document.getElementById("btn-after-change");
-    if(btnAfter) btnAfter.textContent=n==="change1"?"进入节点3 ↗":"进入知识库 ↗";
-    if(nb1) nb1.style.borderWidth=n==="change1"?"1.5px":"0.5px";
-    if(nb2) nb2.style.borderWidth=n==="change2"?"1.5px":"0.5px";
-  } else {
-    if(viewChange) viewChange.classList.remove("active");
-    if(nb1) nb1.style.borderWidth="0.5px";
-    if(nb2) nb2.style.borderWidth="0.5px";
   }
 }
 function renderScores(id,text){
@@ -1951,11 +1906,6 @@ function clearAll(){
   ["btn-to-node2","btn-to-node3","btn-to-node4","btn-to-node5","btn-to-node6"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.disabled=true;
   });
-  changeItems=[];
-  const changeResult=document.getElementById("change-result");
-  if(changeResult) changeResult.style.display="none";
-  const changeInput=document.getElementById("change-input");
-  if(changeInput) changeInput.value="";
   jumpNode(1);setStatus("已重置");
 }
 function copyText(id){
